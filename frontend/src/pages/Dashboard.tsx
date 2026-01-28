@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { TicketList } from '../components/TicketList'
 import { TicketDetail } from '../components/TicketDetail'
 import { EscalationList } from '../components/EscalationList'
+import { ShadowModeStatus } from '../components/ShadowModeStatus'
 
 type ViewMode = 'tickets' | 'escalations' | 'detail'
 
@@ -62,7 +63,10 @@ export function Dashboard() {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6">
+      <main className="max-w-7xl mx-auto py-6 px-4">
+        {/* Shadow Mode / Kill Switch Banner */}
+        <ShadowModeStatus />
+
         {viewMode === 'tickets' && (
           <TicketList onTicketClick={handleTicketClick} />
         )}

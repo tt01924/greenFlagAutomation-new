@@ -2,6 +2,7 @@
  * Reports page - displays weekly statistics and analytics
  */
 import { WeeklyReport } from '../components/WeeklyReport'
+import { ShadowModeStatus } from '../components/ShadowModeStatus'
 
 export function Reports() {
   return (
@@ -36,7 +37,10 @@ export function Reports() {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6">
+      <main className="max-w-7xl mx-auto py-6 px-4">
+        {/* Shadow Mode / Kill Switch Banner */}
+        <ShadowModeStatus />
+
         <WeeklyReport />
       </main>
     </div>

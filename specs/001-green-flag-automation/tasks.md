@@ -154,15 +154,15 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 ### Frontend Dashboard for User Story 3
 
-- [ ] T057 [P] [US3] Create API client in frontend/src/services/api.ts (Axios wrapper for backend API)
-- [ ] T058 [P] [US3] Create TicketList component in frontend/src/components/TicketList.tsx (displays processed tickets with filters)
-- [ ] T059 [P] [US3] Create TicketDetail component in frontend/src/components/TicketDetail.tsx (full ticket view with retract button)
-- [ ] T060 [P] [US3] Create EscalationList component in frontend/src/components/EscalationList.tsx (shows escalated tickets with overdue flag)
-- [ ] T061 [P] [US3] Create WeeklyReport component in frontend/src/components/WeeklyReport.tsx (charts with Recharts)
-- [ ] T062 [P] [US3] Create Dashboard page in frontend/src/pages/Dashboard.tsx (main view with ticket list)
-- [ ] T063 [P] [US3] Create Reports page in frontend/src/pages/Reports.tsx (weekly report page)
-- [ ] T064 [US3] Create App router in frontend/src/App.tsx (React Router with dashboard routes)
-- [ ] T065 [US3] Add retract button logic in TicketDetail.tsx (POST to /retract, handle 5-min window validation)
+- [x] T057 [P] [US3] Create API client in frontend/src/services/api.ts (Axios wrapper for backend API)
+- [x] T058 [P] [US3] Create TicketList component in frontend/src/components/TicketList.tsx (displays processed tickets with filters)
+- [x] T059 [P] [US3] Create TicketDetail component in frontend/src/components/TicketDetail.tsx (full ticket view with retract button)
+- [x] T060 [P] [US3] Create EscalationList component in frontend/src/components/EscalationList.tsx (shows escalated tickets with overdue flag)
+- [x] T061 [P] [US3] Create WeeklyReport component in frontend/src/components/WeeklyReport.tsx (charts with Recharts)
+- [x] T062 [P] [US3] Create Dashboard page in frontend/src/pages/Dashboard.tsx (main view with ticket list)
+- [x] T063 [P] [US3] Create Reports page in frontend/src/pages/Reports.tsx (weekly report page)
+- [x] T064 [US3] Create App router in frontend/src/App.tsx (React Router with dashboard routes)
+- [x] T065 [US3] Add retract button logic in TicketDetail.tsx (POST to /retract, handle 5-min window validation)
 
 ### Scheduled Jobs for User Story 3
 
@@ -181,15 +181,15 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 ### Backend API for User Story 4
 
-- [ ] T068 [P] [US4] Implement shadow mode status endpoint in backend/src/api/admin.py (GET /admin/shadow-mode per contracts/openapi.yaml)
-- [ ] T069 [US4] Add config version tracking to processor.py (log config_version in audit_logs per data-model.md)
-- [ ] T070 [US4] Implement shadow mode enforcement in processor.py (if shadow_mode_active, log action='shadow' but don't post to Jira)
-- [ ] T071 [US4] Add automatic shadow mode expiration check in backend/src/services/shadow_mode.py (after 48h, set shadow_mode_active=false)
+- [x] T068 [P] [US4] Implement shadow mode status endpoint in backend/src/api/admin.py (GET /admin/shadow-mode per contracts/openapi.yaml)
+- [x] T069 [US4] Add config version tracking to processor.py (log config_version in audit_logs per data-model.md)
+- [x] T070 [US4] Implement shadow mode enforcement in processor.py (if shadow_mode_active, log action='shadow' but don't post to Jira)
+- [x] T071 [US4] Add automatic shadow mode expiration check in backend/src/services/shadow_mode.py (after 48h, set shadow_mode_active=false)
 
 ### Frontend for User Story 4
 
-- [ ] T072 [P] [US4] Create ShadowModeStatus component in frontend/src/components/ShadowModeStatus.tsx (banner showing time remaining)
-- [ ] T073 [US4] Add shadow mode indicator to Dashboard page (displays banner if active)
+- [x] T072 [P] [US4] Create ShadowModeStatus component in frontend/src/components/ShadowModeStatus.tsx (banner showing time remaining)
+- [x] T073 [US4] Add shadow mode indicator to Dashboard page (displays banner if active)
 
 ### Infrastructure for User Story 4
 

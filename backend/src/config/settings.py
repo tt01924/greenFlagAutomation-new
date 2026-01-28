@@ -47,6 +47,7 @@ class Settings(BaseSettings):
 
     # Configuration
     CANNED_RESPONSES_PATH: str = "src/config/canned_responses.yaml"
+    CONFIG_VERSION: str = "1.0.0"  # Increment when canned responses change
 
     # Confidence thresholds
     AUTO_RESPOND_THRESHOLD: float = 0.80

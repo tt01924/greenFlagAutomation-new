@@ -78,6 +78,17 @@ class ApiClient {
     return response.data
   }
 
+  // Admin/system endpoints
+  async getShadowModeStatus(): Promise<any> {
+    const response = await this.client.get('/admin/shadow-mode')
+    return response.data
+  }
+
+  async getKillSwitchStatus(): Promise<{ automation_enabled: boolean; status: string }> {
+    const response = await this.client.get('/admin/kill-switch')
+    return response.data
+  }
+
   // Health check
   async healthCheck(): Promise<{ status: string }> {
     const response = await this.client.get('/health')

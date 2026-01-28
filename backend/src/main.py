@@ -7,9 +7,8 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from src.config.settings import settings
 from src.config.logging import setup_logging
-from src.api import health, webhooks, dashboard
+from src.api import health, webhooks, dashboard, admin
 from src.middleware.webhook_auth import verify_jira_webhook_signature
-# from src.api import admin  # Will be added in later phases
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +69,7 @@ app.middleware("http")(verify_jira_webhook_signature)
 app.include_router(health.router, prefix="/api")
 app.include_router(webhooks.router, prefix="/api")  # Phase 3 - User Story 1
 app.include_router(dashboard.router, prefix="/api")  # Phase 5 - User Story 3
-# app.include_router(admin.router, prefix="/api")  # Phase 6
+app.include_router(admin.router, prefix="/api")  # Phase 6 - User Story 4
 
 
 @app.get("/")
