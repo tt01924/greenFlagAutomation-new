@@ -146,11 +146,11 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 ### Backend API for User Story 3
 
-- [ ] T052 [P] [US3] Implement dashboard API endpoints in backend/src/api/dashboard.py per contracts/openapi.yaml (GET /tickets, GET /tickets/:id)
-- [ ] T053 [P] [US3] Implement escalations endpoint in backend/src/api/dashboard.py (GET /escalations with overdue filter)
-- [ ] T054 [P] [US3] Implement retraction endpoint in backend/src/api/dashboard.py (POST /tickets/:id/retract with 5-min window check per FR-016)
-- [ ] T055 [P] [US3] Implement weekly report endpoint in backend/src/api/dashboard.py (GET /reports/weekly with aggregations per data-model.md)
-- [ ] T056 [US3] Implement retraction service in backend/src/services/retraction_service.py (edit Jira comment, add new comment, create audit log entry)
+- [x] T052 [P] [US3] Implement dashboard API endpoints in backend/src/api/dashboard.py per contracts/openapi.yaml (GET /tickets, GET /tickets/:id)
+- [x] T053 [P] [US3] Implement escalations endpoint in backend/src/api/dashboard.py (GET /escalations with overdue filter)
+- [x] T054 [P] [US3] Implement retraction endpoint in backend/src/api/dashboard.py (POST /tickets/:id/retract with 5-min window check per FR-016)
+- [x] T055 [P] [US3] Implement weekly report endpoint in backend/src/api/dashboard.py (GET /reports/weekly with aggregations per data-model.md)
+- [x] T056 [US3] Implement retraction service in backend/src/services/retraction_service.py (edit Jira comment, add new comment, create audit log entry)
 
 ### Frontend Dashboard for User Story 3
 
@@ -166,8 +166,8 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 ### Scheduled Jobs for User Story 3
 
-- [ ] T066 [P] [US3] Implement daily summary job in backend/src/workers/daily_summary_job.py (FR-017 - generates email at 9 AM UTC)
-- [ ] T067 [P] [US3] Implement audit cleanup job in backend/src/workers/audit_cleanup_job.py (FR-014 - archives logs >90 days to S3)
+- [x] T066 [P] [US3] Implement daily summary job in backend/src/workers/daily_summary_job.py (FR-017 - generates email at 9 AM UTC)
+- [x] T067 [P] [US3] Implement audit cleanup job in backend/src/workers/audit_cleanup_job.py (FR-014 - archives logs >90 days to S3)
 
 **Checkpoint**: Dashboard is fully functional - Green Flag holder can view all tickets, retract responses, see escalations, and view weekly reports
 
