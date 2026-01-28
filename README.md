@@ -134,9 +134,120 @@ cd backend
 python -m tests.e2e.test_ticket_flow
 ```
 
-## Deployment
+## Backend Deployment (API Only)
 
-See [deployment documentation](./docs/deployment.md) for production deployment instructions.
+The backend can be deployed independently without the frontend dashboard.
+
+### Step 1: Start Infrastructure Services
+
+```bash
+# Start PostgreSQL, Redis, and MailHog
+docker-compose up -d
+
+# Verify services are healthy
+docker-compose ps
+```
+
+### Step 2: Configure Environment
+
+```bash
+# Copy and edit environment variables
+cp .env.example .env
+
+# Required variables:
+# - DATABASE_URL (PostgreSQL connection)
+# - REDIS_URL (Redis connection)
+# - JIRA_API_TOKEN, JIRA_EMAIL, JIRA_BASE_URL
+# - SLACK_BOT_TOKEN, SLACK_SIGNING_SECRET
+# - ANTHROPIC_API_KEY (or OPENAI_API_KEY)
+# - JIRA_WEBHOOK_SECRET (generate with: openssl rand -hex 32)
+```
+
+### Step 3: Initialize Database
+
+```bash
+cd backend
+
+# Install dependencies (requires Poetry)
+poetry install
+
+# Activate virtual environment
+poetry shell
+
+# Run database migrations
+alembic upgrade head
+
+# Verify tables created
+# Should see: audit_logs, processed_tickets, system_config
+```
+
+### Step 4: Start Backend Services
+
+Open 2 terminals:
+
+**Terminal 1 - API Server:**
+```bash
+cd backend
+poetry shell
+uvicorn src.main:app --host 0.0.0.0 --port 8000
+```
+
+**Terminal 2 - Worker Process:**
+```bash
+cd backend
+poetry shell
+python -m src.workers.ticket_processor_worker
+```
+
+### Step 5: Configure Jira Webhook
+
+1. Go to Jira → Settings → System → Webhooks
+2. Create new webhook:
+   - **URL**: `https://your-domain.com/api/webhooks/jira`
+   - **Events**: `issue_created`, `issue_updated`
+   - **JQL Filter**: `project = CASSINI AND labels = "Green-Flag"`
+   - **Secret**: Use value from JIRA_WEBHOOK_SECRET in .env
+
+### Step 6: Verify Deployment
+
+```bash
+# Check health endpoints
+curl http://localhost:8000/api/health
+curl http://localhost:8000/api/health/ready
+
+# Check API documentation
+open http://localhost:8000/docs
+
+# Send test webhook
+curl -X POST http://localhost:8000/api/webhooks/jira \
+  -H "Content-Type: application/json" \
+  -H "X-Hub-Signature-256: sha256=YOUR_SIGNATURE" \
+  -d @backend/tests/fixtures/jira_webhook_iam_request.json
+```
+
+### Optional: Scheduled Jobs
+
+For daily summaries and audit cleanup, set up cron jobs or Kubernetes CronJobs:
+
+```bash
+# Daily summary (run at 9 AM UTC)
+python -m src.workers.daily_summary_job
+
+# Audit cleanup (run weekly)
+python -m src.workers.audit_cleanup_job
+```
+
+### Backend-Only Usage
+
+Without the frontend dashboard, you can:
+- Use API endpoints directly (see `/docs` for Swagger UI)
+- Query audit_logs table in PostgreSQL
+- Monitor logs from API server and worker
+- Use curl/Postman for retractions and reports
+
+## Full Stack Deployment
+
+See [deployment documentation](./docs/deployment.md) for production deployment with Kubernetes, Terraform, and frontend dashboard.
 
 ## Documentation
 
