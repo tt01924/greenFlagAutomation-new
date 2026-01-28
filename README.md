@@ -39,11 +39,10 @@ cp .env.example .env
 # 4. Setup backend
 cd backend
 poetry install
-poetry shell
-alembic upgrade head
+poetry run alembic upgrade head
 
 # 5. Start backend API
-uvicorn src.main:app --reload --port 8000
+poetry run uvicorn src.main:app --reload --port 8000
 
 # 6. Setup frontend (in another terminal)
 cd frontend
@@ -259,11 +258,8 @@ cd backend
 # Install dependencies (requires Poetry)
 poetry install
 
-# Activate virtual environment
-poetry shell
-
 # Run database migrations
-alembic upgrade head
+poetry run alembic upgrade head
 
 # Verify tables created
 # Should see: audit_logs, processed_tickets, system_config
@@ -276,15 +272,13 @@ Open 2 terminals:
 **Terminal 1 - API Server:**
 ```bash
 cd backend
-poetry shell
-uvicorn src.main:app --host 0.0.0.0 --port 8000
+poetry run uvicorn src.main:app --host 0.0.0.0 --port 8000
 ```
 
 **Terminal 2 - Worker Process:**
 ```bash
 cd backend
-poetry shell
-python -m src.workers.ticket_processor_worker
+poetry run python -m src.workers.ticket_processor_worker
 ```
 
 ### Step 5: Configure Jira Webhook
