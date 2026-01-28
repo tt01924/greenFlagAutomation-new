@@ -27,16 +27,16 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create root-level project structure (backend/, frontend/, infra/, docs/)
-- [ ] T002 Initialize Python backend with Poetry in backend/ (pyproject.toml dependencies per plan.md)
-- [ ] T003 [P] Initialize React frontend with Vite in frontend/ (package.json dependencies per plan.md)
-- [ ] T004 [P] Create backend/docker/Dockerfile for backend service
-- [ ] T005 [P] Create root docker-compose.yml with PostgreSQL, Redis, MailHog services
-- [ ] T006 [P] Create .env.example with all required environment variables from quickstart.md
-- [ ] T007 [P] Setup Python linting (black, mypy, pylint) configuration in backend/pyproject.toml
-- [ ] T008 [P] Setup ESLint and Prettier for frontend in frontend/.eslintrc.js
-- [ ] T009 [P] Create backend/.gitignore and frontend/.gitignore
-- [ ] T010 [P] Create root README.md with project overview and quickstart link
+- [x] T001 Create root-level project structure (backend/, frontend/, infra/, docs/)
+- [x] T002 Initialize Python backend with Poetry in backend/ (pyproject.toml dependencies per plan.md)
+- [x] T003 [P] Initialize React frontend with Vite in frontend/ (package.json dependencies per plan.md)
+- [x] T004 [P] Create backend/docker/Dockerfile for backend service
+- [x] T005 [P] Create root docker-compose.yml with PostgreSQL, Redis, MailHog services
+- [x] T006 [P] Create .env.example with all required environment variables from quickstart.md
+- [x] T007 [P] Setup Python linting (black, mypy, pylint) configuration in backend/pyproject.toml
+- [x] T008 [P] Setup ESLint and Prettier for frontend in frontend/.eslintrc.js
+- [x] T009 [P] Create backend/.gitignore and frontend/.gitignore
+- [x] T010 [P] Create root README.md with project overview and quickstart link
 
 ---
 
@@ -48,41 +48,41 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 ### Database & Storage Foundation
 
-- [ ] T011 Setup Alembic migrations framework in backend/migrations/
-- [ ] T012 Create initial migration 001_initial_schema.py with audit_logs, processed_tickets, system_config tables per data-model.md
-- [ ] T013 [P] Implement append-only trigger for audit_logs table in migration
-- [ ] T014 [P] Create SQLAlchemy base model in backend/src/models/base.py
-- [ ] T015 [P] Create AuditLog model in backend/src/models/audit_log.py (maps to data-model.md schema)
-- [ ] T016 [P] Create ProcessedTicket model in backend/src/models/processed_ticket.py
-- [ ] T017 [P] Create SystemConfig model in backend/src/models/system_config.py
+- [x] T011 Setup Alembic migrations framework in backend/migrations/
+- [x] T012 Create initial migration 001_initial_schema.py with audit_logs, processed_tickets, system_config tables per data-model.md
+- [x] T013 [P] Implement append-only trigger for audit_logs table in migration
+- [x] T014 [P] Create SQLAlchemy base model in backend/src/models/base.py
+- [x] T015 [P] Create AuditLog model in backend/src/models/audit_log.py (maps to data-model.md schema)
+- [x] T016 [P] Create ProcessedTicket model in backend/src/models/processed_ticket.py
+- [x] T017 [P] Create SystemConfig model in backend/src/models/system_config.py
 
 ### Configuration & Settings Foundation
 
-- [ ] T018 Create Pydantic settings in backend/src/config/settings.py (loads from .env per quickstart.md)
-- [ ] T019 [P] Create canned_responses.yaml in backend/src/config/ with 11 initial responses from spec.md
-- [ ] T020 [P] Implement CannedResponse dataclass in backend/src/models/canned_response.py with YAML loading
-- [ ] T021 [P] Create LLM prompt templates in backend/src/config/prompts.py
+- [x] T018 Create Pydantic settings in backend/src/config/settings.py (loads from .env per quickstart.md)
+- [x] T019 [P] Create canned_responses.yaml in backend/src/config/ with 11 initial responses from spec.md
+- [x] T020 [P] Implement CannedResponse dataclass in backend/src/models/canned_response.py with YAML loading
+- [x] T021 [P] Create LLM prompt templates in backend/src/config/prompts.py
 
 ### External Client Foundation
 
-- [ ] T022 [P] Implement JiraClient wrapper in backend/src/services/jira_client.py (atlassian-python-api)
-- [ ] T023 [P] Implement SlackClient wrapper in backend/src/services/slack_client.py (slack-bolt SDK)
-- [ ] T024 [P] Implement LLM classifier in backend/src/services/classifier.py (Anthropic SDK with GPT-4 fallback)
+- [x] T022 [P] Implement JiraClient wrapper in backend/src/services/jira_client.py (atlassian-python-api)
+- [x] T023 [P] Implement SlackClient wrapper in backend/src/services/slack_client.py (slack-bolt SDK)
+- [x] T024 [P] Implement LLM classifier in backend/src/services/classifier.py (Anthropic SDK with GPT-4 fallback)
 
 ### API & Worker Foundation
 
-- [ ] T025 Create FastAPI app in backend/src/main.py with CORS, middleware, routers
-- [ ] T026 [P] Setup Redis queue in backend/src/services/queue.py (RQ/Celery wrapper)
-- [ ] T027 [P] Implement audit logger service in backend/src/services/audit_logger.py (append-only writes)
-- [ ] T028 [P] Create health check endpoints in backend/src/api/health.py per contracts/openapi.yaml
-- [ ] T029 [P] Setup error handling middleware in backend/src/middleware/error_handler.py
-- [ ] T030 [P] Setup logging configuration in backend/src/config/logging.py
+- [x] T025 Create FastAPI app in backend/src/main.py with CORS, middleware, routers
+- [x] T026 [P] Setup Redis queue in backend/src/services/queue.py (RQ/Celery wrapper)
+- [x] T027 [P] Implement audit logger service in backend/src/services/audit_logger.py (append-only writes)
+- [x] T028 [P] Create health check endpoints in backend/src/api/health.py per contracts/openapi.yaml
+- [x] T029 [P] Setup error handling middleware in backend/src/middleware/error_handler.py
+- [x] T030 [P] Setup logging configuration in backend/src/config/logging.py
 
 ### Testing Foundation
 
-- [ ] T031 [P] Create pytest configuration in backend/pytest.ini
-- [ ] T032 [P] Create test fixtures in backend/tests/fixtures/ (mock Jira, Slack, LLM responses)
-- [ ] T033 [P] Create database test helpers in backend/tests/helpers/db.py (test DB setup/teardown)
+- [x] T031 [P] Create pytest configuration in backend/pytest.ini
+- [x] T032 [P] Create test fixtures in backend/tests/fixtures/ (mock Jira, Slack, LLM responses)
+- [x] T033 [P] Create database test helpers in backend/tests/helpers/db.py (test DB setup/teardown)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
