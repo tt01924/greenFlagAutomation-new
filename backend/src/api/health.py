@@ -1,11 +1,12 @@
 """Health check endpoints."""
 import logging
 from typing import Dict, Any
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Response
 from sqlalchemy.orm import Session
 
 from src.models.base import get_db
 from src.services.queue import TicketQueue
+from src.services.metrics import MetricsService
 
 logger = logging.getLogger(__name__)
 
@@ -78,3 +79,13 @@ async def liveness_check() -> Dict[str, str]:
     return {
         "status": "alive",
     }
+
+
+@router.get("/metrics")
+async def metrics() -> Response:
+    """Prometheus metrics endpoint.
+
+    Returns:
+        Prometheus metrics in text format
+    """
+    return MetricsService.get_metrics()
