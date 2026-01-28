@@ -109,7 +109,7 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 ### Integration Tests for User Story 1
 
-- [ ] T044 [US1] Create E2E test script in backend/tests/e2e/test_auto_response_flow.py (simulates full workflow from webhook to Jira posting)
+- [x] T044 [US1] Create E2E test script in backend/tests/e2e/test_auto_response_flow.py (simulates full workflow from webhook to Jira posting)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - tickets with clear matches get automated responses posted to Jira
 
@@ -123,16 +123,16 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 ### Implementation for User Story 2
 
-- [ ] T045 [P] [US2] Implement escalation service in backend/src/services/escalation_service.py (FR-008, FR-009, FR-011, FR-023)
-- [ ] T046 [P] [US2] Create Slack message builder in backend/src/services/slack_message_builder.py per contracts/slack-message.json (all escalation variants)
-- [ ] T047 [US2] Integrate escalation logic into processor.py (escalate on low confidence, ambiguous, sensitive data, errors)
-- [ ] T048 [US2] Implement kill switch check in backend/src/services/processor.py (FR-020, read from system_config.automation_enabled)
-- [ ] T049 [US2] Add error handling with escalation in backend/src/services/processor.py (FR-022 - fail safe)
-- [ ] T050 [US2] Implement escalation retry queue in backend/src/services/escalation_service.py (Slack unavailable → queue for retry)
+- [x] T045 [P] [US2] Implement escalation service in backend/src/services/escalation_service.py (FR-008, FR-009, FR-011, FR-023)
+- [x] T046 [P] [US2] Create Slack message builder in backend/src/services/slack_message_builder.py per contracts/slack-message.json (all escalation variants)
+- [x] T047 [US2] Integrate escalation logic into processor.py (escalate on low confidence, ambiguous, sensitive data, errors)
+- [x] T048 [US2] Implement kill switch check in backend/src/services/processor.py (FR-020, read from system_config.automation_enabled)
+- [x] T049 [US2] Add error handling with escalation in backend/src/services/processor.py (FR-022 - fail safe)
+- [x] T050 [US2] Implement escalation retry queue in backend/src/services/escalation_service.py (Slack unavailable → queue for retry)
 
 ### Integration Tests for User Story 2
 
-- [ ] T051 [US2] Create E2E test script in backend/tests/e2e/test_escalation_flow.py (simulates escalation scenarios)
+- [x] T051 [US2] Create E2E test script in backend/tests/e2e/test_escalation_flow.py (simulates escalation scenarios)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - clear matches auto-respond, unclear matches escalate to human
 

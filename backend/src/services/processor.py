@@ -14,6 +14,7 @@ from src.services.response_poster import ResponsePoster
 from src.services.template_renderer import TemplateRenderer
 from src.services.audit_logger import AuditLogger
 from src.services.slack_client import SlackClient
+from src.services.escalation_service import EscalationService
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ class TicketProcessor:
         self.evaluator = ConfidenceEvaluator()
         self.scanner = SensitiveDataScanner()
         self.response_poster = ResponsePoster()
-        self.slack_client = SlackClient()
+        self.escalation_service = EscalationService()
 
     def process_ticket(self, webhook_payload: Dict[str, Any]) -> Dict[str, Any]:
         """Process a single ticket through full workflow.
@@ -383,16 +384,12 @@ class TicketProcessor:
             processing_duration_ms=processing_duration_ms,
         )
 
-        # Send Slack escalation (continue processing even if Slack fails)
+        # Send Slack escalation using EscalationService (with retry logic)
         try:
             issue = webhook_payload.get("issue", {})
             fields = issue.get("fields", {})
 
-            # Get Green Flag holder - for now, send to configured channel
-            # TODO: Implement Green Flag holder lookup
-
-            self.slack_client.send_escalation_message(
-                channel_or_user_id="#cassini-squad",  # TODO: Get from config
+            self.escalation_service.escalate_ticket(
                 ticket_key=ticket_key,
                 ticket_title=fields.get("summary", ""),
                 escalation_reason=reason,
@@ -404,8 +401,8 @@ class TicketProcessor:
                 description_snippet=fields.get("description", "")[:200],
             )
         except Exception as e:
-            logger.error(f"Failed to send Slack escalation for {ticket_key}: {e}")
-            # Don't fail the escalation if Slack fails
+            logger.error(f"Failed to escalate {ticket_key}: {e}")
+            # Don't fail the escalation if Slack fails - it's queued for retry
 
         logger.info(f"Escalated {ticket_key}: {reason}")
 
