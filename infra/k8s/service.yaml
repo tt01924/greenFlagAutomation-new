@@ -1,0 +1,98 @@
+---
+# Green Flag Automation - Kubernetes Services
+# Exposes API pods via LoadBalancer
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: green-flag-automation-api
+  namespace: cassini
+  labels:
+    app: green-flag-automation
+    component: api
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:eu-west-1:ACCOUNT_ID:certificate/CERT_ID"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+spec:
+  type: LoadBalancer
+  selector:
+    app: green-flag-automation
+    component: api
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8000
+      protocol: TCP
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP
+  sessionAffinity: None
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: green-flag-automation-api-internal
+  namespace: cassini
+  labels:
+    app: green-flag-automation
+    component: api
+spec:
+  type: ClusterIP
+  selector:
+    app: green-flag-automation
+    component: api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 8000
+      protocol: TCP
+  sessionAffinity: None
+
+---
+# ServiceAccount for pods
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: green-flag-automation
+  namespace: cassini
+  labels:
+    app: green-flag-automation
+
+---
+# Role for accessing ConfigMaps and Secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: green-flag-automation-role
+  namespace: cassini
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+
+---
+# RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: green-flag-automation-rolebinding
+  namespace: cassini
+subjects:
+  - kind: ServiceAccount
+    name: green-flag-automation
+    namespace: cassini
+roleRef:
+  kind: Role
+  name: green-flag-automation-role
+  apiGroup: rbac.authorization.k8s.io

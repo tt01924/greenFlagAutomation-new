@@ -1,0 +1,330 @@
+{
+  "dashboard": {
+    "title": "Green Flag Automation",
+    "tags": ["cassini", "automation", "jira"],
+    "timezone": "UTC",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "type": "stat",
+        "title": "Automation Status",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "automation_enabled",
+            "legendFormat": "Automation"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "0", "text": "DISABLED"},
+              {"type": "value", "value": "1", "text": "ENABLED"}
+            ],
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "type": "stat",
+        "title": "Shadow Mode",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "shadow_mode_active",
+            "legendFormat": "Shadow Mode"
+          }
+        ],
+        "options": {
+          "colorMode": "background"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "value": "0", "text": "INACTIVE"},
+              {"type": "value", "value": "1", "text": "ACTIVE"}
+            ],
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "type": "stat",
+        "title": "Tickets Processed (24h)",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(increase(tickets_processed_total[24h]))",
+            "legendFormat": "Total"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        }
+      },
+      {
+        "id": 4,
+        "type": "stat",
+        "title": "Error Rate (5m)",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(tickets_failed_total[5m]) / rate(tickets_processed_total[5m]) * 100",
+            "legendFormat": "Error %"
+          }
+        ],
+        "options": {
+          "colorMode": "background"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 2, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "type": "graph",
+        "title": "Ticket Processing Rate",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {
+            "expr": "rate(tickets_processed_total{action=\"auto_respond\"}[5m]) * 60",
+            "legendFormat": "Auto-Responded"
+          },
+          {
+            "expr": "rate(tickets_processed_total{action=\"escalate\"}[5m]) * 60",
+            "legendFormat": "Escalated"
+          },
+          {
+            "expr": "rate(tickets_processed_total{action=\"shadow\"}[5m]) * 60",
+            "legendFormat": "Shadow Mode"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Tickets/min"}
+        ]
+      },
+      {
+        "id": 6,
+        "type": "graph",
+        "title": "Processing Duration (P95)",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(ticket_processing_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95 Duration"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(ticket_processing_duration_seconds_bucket[5m]))",
+            "legendFormat": "P50 Duration"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Duration"}
+        ]
+      },
+      {
+        "id": 7,
+        "type": "bargauge",
+        "title": "Actions Distribution (24h)",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "sum(increase(tickets_processed_total{action=\"auto_respond\"}[24h]))",
+            "legendFormat": "Auto-Responded"
+          },
+          {
+            "expr": "sum(increase(tickets_processed_total{action=\"escalate\"}[24h]))",
+            "legendFormat": "Escalated"
+          },
+          {
+            "expr": "sum(increase(tickets_processed_total{action=\"shadow\"}[24h]))",
+            "legendFormat": "Shadow"
+          }
+        ],
+        "options": {
+          "orientation": "horizontal",
+          "displayMode": "gradient"
+        }
+      },
+      {
+        "id": 8,
+        "type": "stat",
+        "title": "Escalation Queue",
+        "gridPos": {"h": 4, "w": 8, "x": 8, "y": 12},
+        "targets": [
+          {
+            "expr": "escalation_queue_depth",
+            "legendFormat": "Unresolved"
+          }
+        ],
+        "options": {
+          "colorMode": "background"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 5, "color": "yellow"},
+                {"value": 10, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "type": "stat",
+        "title": "Overdue Escalations",
+        "gridPos": {"h": 4, "w": 8, "x": 16, "y": 12},
+        "targets": [
+          {
+            "expr": "escalation_overdue_count",
+            "legendFormat": ">4 hours"
+          }
+        ],
+        "options": {
+          "colorMode": "background"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 3, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 10,
+        "type": "graph",
+        "title": "Classification Confidence Distribution",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(classification_confidence_score_bucket[5m]))",
+            "legendFormat": "P95"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(classification_confidence_score_bucket[5m]))",
+            "legendFormat": "P50"
+          },
+          {
+            "expr": "histogram_quantile(0.10, rate(classification_confidence_score_bucket[5m]))",
+            "legendFormat": "P10"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "Confidence"}
+        ]
+      },
+      {
+        "id": 11,
+        "type": "graph",
+        "title": "Retraction Rate",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(tickets_retracted_total[1h]) / rate(tickets_auto_responded_total[1h]) * 100",
+            "legendFormat": "Retraction %"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Rate"}
+        ],
+        "alert": {
+          "name": "High Retraction Rate",
+          "conditions": [
+            {
+              "evaluator": {"type": "gt", "params": [5]},
+              "query": {"params": ["A", "1h", "now"]}
+            }
+          ]
+        }
+      },
+      {
+        "id": 12,
+        "type": "graph",
+        "title": "External Service Latency",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(external_service_request_duration_seconds_bucket{service=\"jira\"}[5m]))",
+            "legendFormat": "Jira P95"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(external_service_request_duration_seconds_bucket{service=\"slack\"}[5m]))",
+            "legendFormat": "Slack P95"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(external_service_request_duration_seconds_bucket{service=\"anthropic\"}[5m]))",
+            "legendFormat": "Anthropic P95"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"}
+        ]
+      },
+      {
+        "id": 13,
+        "type": "graph",
+        "title": "External Service Error Rates",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "rate(external_service_request_total{service=\"jira\",status=\"failure\"}[5m]) / rate(external_service_request_total{service=\"jira\"}[5m]) * 100",
+            "legendFormat": "Jira Errors"
+          },
+          {
+            "expr": "rate(external_service_request_total{service=\"slack\",status=\"failure\"}[5m]) / rate(external_service_request_total{service=\"slack\"}[5m]) * 100",
+            "legendFormat": "Slack Errors"
+          },
+          {
+            "expr": "rate(external_service_request_total{service=~\"anthropic|openai\",status=\"failure\"}[5m]) / rate(external_service_request_total{service=~\"anthropic|openai\"}[5m]) * 100",
+            "legendFormat": "LLM Errors"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Error Rate"}
+        ]
+      }
+    ]
+  }
+}

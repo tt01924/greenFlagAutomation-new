@@ -1,0 +1,136 @@
+---
+# Green Flag Automation - Kubernetes CronJobs
+# Scheduled jobs for daily summary and audit cleanup
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: green-flag-automation-daily-summary
+  namespace: cassini
+  labels:
+    app: green-flag-automation
+    component: cron
+spec:
+  # Run daily at 9 AM UTC (constitutional requirement FR-017)
+  schedule: "0 9 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: green-flag-automation
+            component: daily-summary
+        spec:
+          serviceAccountName: green-flag-automation
+          restartPolicy: OnFailure
+          containers:
+            - name: daily-summary
+              image: skyscanner/green-flag-automation:latest
+              imagePullPolicy: Always
+              command: ["python"]
+              args:
+                - "-m"
+                - "src.workers.daily_summary_job"
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: green-flag-automation-secrets
+                      key: database-url
+                - name: SLACK_BOT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: green-flag-automation-secrets
+                      key: slack-bot-token
+                - name: ENVIRONMENT
+                  value: "production"
+                - name: LOG_LEVEL
+                  value: "INFO"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: green-flag-automation-audit-cleanup
+  namespace: cassini
+  labels:
+    app: green-flag-automation
+    component: cron
+spec:
+  # Run weekly on Sunday at 2 AM UTC (constitutional requirement FR-014)
+  schedule: "0 2 * * 0"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: green-flag-automation
+            component: audit-cleanup
+        spec:
+          serviceAccountName: green-flag-automation
+          restartPolicy: OnFailure
+          containers:
+            - name: audit-cleanup
+              image: skyscanner/green-flag-automation:latest
+              imagePullPolicy: Always
+              command: ["python"]
+              args:
+                - "-m"
+                - "src.workers.audit_cleanup_job"
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: green-flag-automation-secrets
+                      key: database-url
+                - name: AWS_REGION
+                  value: "eu-west-1"
+                - name: S3_AUDIT_BUCKET
+                  value: "skyscanner-green-flag-automation-audit-archive"
+                - name: ENVIRONMENT
+                  value: "production"
+                - name: LOG_LEVEL
+                  value: "INFO"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+
+---
+# ConfigMap for canned responses
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: green-flag-automation-config
+  namespace: cassini
+  labels:
+    app: green-flag-automation
+data:
+  canned_responses.yaml: |
+    # This should be replaced with the actual canned_responses.yaml content
+    # You can create it from the file:
+    # kubectl create configmap green-flag-automation-config \
+    #   --namespace=cassini \
+    #   --from-file=canned_responses.yaml=backend/src/config/canned_responses.yaml
+    version: "1.0.0"
+    activated_at: "2025-01-01T00:00:00Z"
+    shadow_mode_hours: 48
+    canned_responses: []

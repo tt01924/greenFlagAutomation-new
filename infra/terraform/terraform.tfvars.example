@@ -1,0 +1,25 @@
+# Green Flag Automation - Terraform Variables Example
+# Copy this file to terraform.tfvars and fill in your values
+
+aws_region  = "eu-west-1"
+environment = "production"
+
+# RDS Configuration
+rds_instance_class      = "db.t4g.large"
+rds_allocated_storage   = 100
+rds_max_allocated_storage = 500
+rds_username            = "gfa_admin"
+rds_password            = "CHANGE_ME_STRONG_PASSWORD"  # Use AWS Secrets Manager in production
+rds_backup_retention_days = 7
+
+# ElastiCache Redis Configuration
+redis_node_type             = "cache.t4g.medium"
+redis_auth_token            = "CHANGE_ME_STRONG_TOKEN"  # Generate with: openssl rand -base64 32
+redis_snapshot_retention_days = 5
+
+# EKS Configuration
+eks_oidc_provider_arn = "arn:aws:iam::ACCOUNT_ID:oidc-provider/oidc.eks.eu-west-1.amazonaws.com/id/OIDC_ID"
+eks_oidc_provider     = "oidc.eks.eu-west-1.amazonaws.com/id/OIDC_ID"
+
+# Notifications
+sns_topic_arn = "arn:aws:sns:eu-west-1:ACCOUNT_ID:cassini-infrastructure-alerts"

@@ -224,13 +224,13 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 **Purpose**: Deploy-ready infrastructure configuration
 
-- [ ] T083 [P] Create Kubernetes deployment manifest in infra/k8s/deployment.yaml (backend pods with health checks)
-- [ ] T084 [P] Create Kubernetes service manifest in infra/k8s/service.yaml (LoadBalancer for API)
-- [ ] T085 [P] Create Kubernetes secrets template in infra/k8s/secrets.yaml (Jira, Slack, LLM API keys)
-- [ ] T086 [P] Create Kubernetes CronJob manifests in infra/k8s/cronjob.yaml (daily summary and audit cleanup)
-- [ ] T087 [P] Create Terraform configuration in infra/terraform/main.tf (RDS PostgreSQL, ElastiCache Redis, S3 audit archive bucket)
-- [ ] T088 [P] Create Terraform variables in infra/terraform/variables.tf
-- [ ] T089 [P] Setup Grafana dashboard JSON in infra/grafana/dashboard.json (ticket metrics, error rates, latencies)
+- [x] T083 [P] Create Kubernetes deployment manifest in infra/k8s/deployment.yaml (backend pods with health checks)
+- [x] T084 [P] Create Kubernetes service manifest in infra/k8s/service.yaml (LoadBalancer for API)
+- [x] T085 [P] Create Kubernetes secrets template in infra/k8s/secrets.yaml (Jira, Slack, LLM API keys)
+- [x] T086 [P] Create Kubernetes CronJob manifests in infra/k8s/cronjob.yaml (daily summary and audit cleanup)
+- [x] T087 [P] Create Terraform configuration in infra/terraform/main.tf (RDS PostgreSQL, ElastiCache Redis, S3 audit archive bucket)
+- [x] T088 [P] Create Terraform variables in infra/terraform/variables.tf
+- [x] T089 [P] Setup Grafana dashboard JSON in infra/grafana/dashboard.json (ticket metrics, error rates, latencies)
 - [ ] T090 [P] Create deployment documentation in docs/deployment.md (kubectl commands, terraform apply steps)
 
 ---
