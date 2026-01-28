@@ -1,0 +1,59 @@
+# Green Flag Automation - Service Catalog
+# Automated ticket response system for Cassini Squad
+
+---
+version: '1'
+type: 'microservice'
+extras:
+  template: 'python-fastapi'
+  tags:
+    - 'python-fastapi'
+    - 'llm'
+    - 'automation'
+    - 'jira'
+    - 'slack'
+component:
+  name: 'green-flag-automation'
+  owner: 'Cassini'
+  description: 'Automated ticket response system that classifies Jira tickets using LLM and either auto-responds with pre-approved canned responses or escalates to Green Flag holder via Slack'
+  awsProjectTag: 'green-flag-automation'
+  serviceClass: 'business-class'
+  public: False
+  personalDataHandling: 'none'  # Ticket descriptions may contain PII but are not persisted beyond 90 days
+  soxScope: False
+  paymentProcessing: False
+  outOfHoursSupportRequired: False  # Non-critical automation system
+  victorOps:
+    teamName: 'Cassini'
+    escalationPolicyName: 'Cassini: Standard'
+  lifecycleState: 'production'
+  alertInstance: 'https://grafana.cassini.skyscanner.net/d/green-flag-automation'
+  designDocuments:
+    - './specs/001-green-flag-automation/spec.md'
+    - './specs/001-green-flag-automation/plan.md'
+    - './docs/deployment.md'
+  operationalDashboards:
+    - 'https://grafana.cassini.skyscanner.net/d/green-flag-automation'
+  playbooks:
+    - './docs/runbook.md'
+  securityChecklistID: 'SDSEC-XXXXX'  # TODO: Replace with actual security checklist ID
+  supportOverride:
+    slackChannel: '#cassini-squad'
+
+---
+version: '1'
+type: 'frontend-experience'
+component:
+  name: 'green-flag-automation-dashboard'
+  subdomain: 'green-flag-automation-subdomain'
+  owner: 'Cassini'
+  description: 'React dashboard for Green Flag Automation oversight, providing ticket history, retraction capability, escalation monitoring, and weekly reports'
+  serviceClass: 'business-class'
+  public: False
+  personalDataHandling: 'none'
+  soxScope: False
+  paymentProcessing: False
+  lifecycleState: 'production'
+  operationalDashboards:
+    - 'https://grafana.cassini.skyscanner.net/d/green-flag-automation'
+  securityChecklistID: 'SDSEC-XXXXX'  # TODO: Replace with actual security checklist ID
