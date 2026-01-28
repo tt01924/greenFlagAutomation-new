@@ -1,0 +1,265 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Jira Webhook Event Schema",
+  "description": "Schema for Jira webhook payloads received when Green Flag tickets are created or updated",
+  "type": "object",
+  "required": ["timestamp", "webhookEvent", "issue"],
+  "properties": {
+    "timestamp": {
+      "type": "integer",
+      "description": "Unix timestamp (milliseconds) when the event occurred",
+      "example": 1706356800000
+    },
+    "webhookEvent": {
+      "type": "string",
+      "description": "Type of Jira event",
+      "enum": [
+        "jira:issue_created",
+        "jira:issue_updated",
+        "comment_created"
+      ],
+      "example": "jira:issue_created"
+    },
+    "issue_event_type_name": {
+      "type": "string",
+      "description": "Human-readable event type",
+      "example": "issue_created"
+    },
+    "user": {
+      "type": "object",
+      "description": "User who triggered the event",
+      "properties": {
+        "self": {"type": "string", "format": "uri"},
+        "accountId": {"type": "string", "example": "5b10ac8d82e05b22cc7d4ef5"},
+        "displayName": {"type": "string", "example": "John Doe"},
+        "emailAddress": {"type": "string", "format": "email"},
+        "active": {"type": "boolean"},
+        "timeZone": {"type": "string", "example": "Europe/London"}
+      }
+    },
+    "issue": {
+      "type": "object",
+      "required": ["id", "key", "fields"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Jira issue ID (internal)",
+          "example": "12345678"
+        },
+        "key": {
+          "type": "string",
+          "description": "Jira issue key (PROJ-123)",
+          "pattern": "^[A-Z]+-[0-9]+$",
+          "example": "CASSINI-1234"
+        },
+        "self": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to issue in Jira API"
+        },
+        "fields": {
+          "type": "object",
+          "description": "Issue fields",
+          "required": ["summary", "description", "reporter", "created"],
+          "properties": {
+            "summary": {
+              "type": "string",
+              "description": "Issue title",
+              "maxLength": 255,
+              "example": "Need IAM permissions for my project"
+            },
+            "description": {
+              "type": ["string", "null"],
+              "description": "Issue description (may be null)",
+              "example": "Can someone help me get IAM permissions? I need access to..."
+            },
+            "issuetype": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string"},
+                "name": {"type": "string", "example": "Task"},
+                "subtask": {"type": "boolean"}
+              }
+            },
+            "project": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string"},
+                "key": {"type": "string", "example": "CASSINI"},
+                "name": {"type": "string", "example": "Cassini Squad"}
+              }
+            },
+            "reporter": {
+              "type": "object",
+              "description": "User who created the issue",
+              "required": ["accountId", "displayName"],
+              "properties": {
+                "accountId": {"type": "string", "example": "5b10ac8d82e05b22cc7d4ef5"},
+                "displayName": {"type": "string", "example": "John Doe"},
+                "emailAddress": {"type": "string", "format": "email"}
+              }
+            },
+            "assignee": {
+              "type": ["object", "null"],
+              "description": "User assigned to the issue (may be null)",
+              "properties": {
+                "accountId": {"type": "string"},
+                "displayName": {"type": "string"},
+                "emailAddress": {"type": "string", "format": "email"}
+              }
+            },
+            "priority": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string"},
+                "name": {"type": "string", "example": "Medium"}
+              }
+            },
+            "status": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string"},
+                "name": {"type": "string", "example": "Open"}
+              }
+            },
+            "labels": {
+              "type": "array",
+              "description": "Issue labels (must include 'Green-Flag')",
+              "items": {"type": "string"},
+              "example": ["Green-Flag", "IAM", "AWS"]
+            },
+            "created": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp when issue was created",
+              "example": "2026-01-27T10:30:00.000+0000"
+            },
+            "updated": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp when issue was last updated"
+            },
+            "comment": {
+              "type": "object",
+              "description": "Comments on the issue",
+              "properties": {
+                "comments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {"type": "string"},
+                      "author": {
+                        "type": "object",
+                        "properties": {
+                          "accountId": {"type": "string"},
+                          "displayName": {"type": "string"}
+                        }
+                      },
+                      "body": {"type": "string"},
+                      "created": {"type": "string", "format": "date-time"},
+                      "updated": {"type": "string", "format": "date-time"}
+                    }
+                  }
+                },
+                "total": {"type": "integer"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "changelog": {
+      "type": "object",
+      "description": "Present for jira:issue_updated events",
+      "properties": {
+        "id": {"type": "string"},
+        "items": {
+          "type": "array",
+          "description": "List of fields that changed",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {"type": "string", "example": "status"},
+              "fieldtype": {"type": "string", "example": "jira"},
+              "from": {"type": ["string", "null"]},
+              "fromString": {"type": ["string", "null"]},
+              "to": {"type": ["string", "null"]},
+              "toString": {"type": ["string", "null"]}
+            }
+          }
+        }
+      }
+    },
+    "comment": {
+      "type": "object",
+      "description": "Present for comment_created events",
+      "properties": {
+        "id": {"type": "string"},
+        "author": {
+          "type": "object",
+          "properties": {
+            "accountId": {"type": "string"},
+            "displayName": {"type": "string"}
+          }
+        },
+        "body": {"type": "string"},
+        "created": {"type": "string", "format": "date-time"}
+      }
+    }
+  },
+  "examples": [
+    {
+      "timestamp": 1706356800000,
+      "webhookEvent": "jira:issue_created",
+      "issue_event_type_name": "issue_created",
+      "user": {
+        "accountId": "5b10ac8d82e05b22cc7d4ef5",
+        "displayName": "John Doe",
+        "emailAddress": "john.doe@skyscanner.net",
+        "active": true,
+        "timeZone": "Europe/London"
+      },
+      "issue": {
+        "id": "12345678",
+        "key": "CASSINI-1234",
+        "self": "https://jira.skyscanner.net/rest/api/2/issue/12345678",
+        "fields": {
+          "summary": "Need IAM permissions for my project",
+          "description": "Can someone help me get IAM permissions? I need access to S3 and DynamoDB for my new service.",
+          "issuetype": {
+            "name": "Task",
+            "subtask": false
+          },
+          "project": {
+            "key": "CASSINI",
+            "name": "Cassini Squad"
+          },
+          "reporter": {
+            "accountId": "5b10ac8d82e05b22cc7d4ef5",
+            "displayName": "John Doe",
+            "emailAddress": "john.doe@skyscanner.net"
+          },
+          "assignee": {
+            "accountId": "5b10ac8d82e05b22cc7d4ef6",
+            "displayName": "Jane Smith",
+            "emailAddress": "jane.smith@skyscanner.net"
+          },
+          "priority": {
+            "name": "Medium"
+          },
+          "status": {
+            "name": "Open"
+          },
+          "labels": ["Green-Flag", "IAM", "AWS"],
+          "created": "2026-01-27T10:30:00.000+0000",
+          "updated": "2026-01-27T10:30:00.000+0000",
+          "comment": {
+            "comments": [],
+            "total": 0
+          }
+        }
+      }
+    }
+  ]
+}

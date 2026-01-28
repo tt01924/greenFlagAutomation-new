@@ -1,0 +1,206 @@
+version: "1.0.0"
+activated_at: "2026-01-28T00:00:00Z"
+shadow_mode_hours: 48
+
+canned_responses:
+  - id: "iam-request"
+    name: "Cassini - IAM request"
+    category: "AWS"
+    response: |
+      Hey {{issueReporter}}, if you could provide the account, project role and the IAM policy you'd like in JSON format I can review and apply if it looks sensible.
+
+      For the policy - there are examples available online through a quick google search, there's also the AWS Policy Generator if it's easier doing it via a GUI, and AI can also provide a policy (although sometimes these can be overly permissive and in advanced cases it can even make up AWS services or actions).
+    keywords:
+      - IAM
+      - permissions
+      - policy
+      - account access
+      - AWS
+      - role
+    active: true
+
+  - id: "empty-s3-bucket"
+    name: "CAS - Empty S3 bucket"
+    category: "AWS"
+    response: |
+      Hey {{issueReporter}}, I can empty that S3 bucket for you. Please confirm the exact bucket name and AWS account ID to proceed. Once confirmed, I'll clear all objects and ensure the bucket is ready for deletion if needed.
+
+      Note: This action cannot be undone, so please double-check the bucket name before confirming.
+    keywords:
+      - S3
+      - bucket
+      - empty
+      - delete bucket
+      - clear bucket
+      - AWS
+    active: true
+
+  - id: "cortex-scorecard-ownership"
+    name: "CAS - Cortex Scorecard Ownership"
+    category: "Cortex"
+    response: |
+      Hello {{issueReporter}}!
+
+      Cassini own the Cortex platform but not scorecards. If you need an exemption, please reach out directly to the scorecard owner. You can find the scorecard owners here https://github.com/Skyscanner/production-standards/blob/main/STANDARDS_OWNERS.md.
+    keywords:
+      - Cortex
+      - scorecard
+      - exemption
+      - ownership
+      - standards
+    active: true
+
+  - id: "cortex-bug"
+    name: "CAS - Cortex Bug"
+    category: "Cortex"
+    response: |
+      Thanks for reporting this Cortex issue, {{issueReporter}}! I've logged this bug and will investigate. In the meantime, if you have any screenshots, error messages, or steps to reproduce, please add them to this ticket.
+
+      Expected resolution time: 2-3 business days for triage, with updates posted here.
+    keywords:
+      - Cortex
+      - bug
+      - error
+      - broken
+      - not working
+      - issue
+    active: true
+
+  - id: "cortex-feature-request"
+    name: "CAS - Cortex Feature Request"
+    category: "Cortex"
+    response: |
+      Hi {{issueReporter}}, thanks for the feature request! We've added this to our Cortex backlog. Feature requests are prioritized based on:
+      1. Number of teams impacted
+      2. Alignment with platform roadmap
+      3. Implementation complexity
+
+      We'll review this in our next planning session and update this ticket with our decision.
+    keywords:
+      - Cortex
+      - feature
+      - enhancement
+      - request
+      - add
+      - improve
+    active: true
+
+  - id: "cql-request"
+    name: "CAS - CQL request"
+    category: "Cortex"
+    response: |
+      Hey {{issueReporter}}, I can help with your Cortex Query Language (CQL) request. Please provide:
+      1. The entity type you're querying (services, teams, resources, etc.)
+      2. The specific fields or filters you need
+      3. The use case (dashboard, automation, reporting, etc.)
+
+      Once I have these details, I'll provide the CQL query and test it against your data.
+    keywords:
+      - CQL
+      - Cortex Query Language
+      - query
+      - filter
+      - search
+      - Cortex
+    active: true
+
+  - id: "on-call-escalation"
+    name: "Cassini - On-call escalation"
+    category: "Operations"
+    response: |
+      Hi {{issueReporter}}, I see this is marked as urgent. I've escalated this to the Cassini on-call engineer via PagerDuty. They should respond within 15 minutes during business hours, or 30 minutes outside business hours.
+
+      For immediate assistance, you can also reach us on Slack at #cassini-oncall.
+    keywords:
+      - urgent
+      - on-call
+      - escalation
+      - emergency
+      - critical
+      - production down
+    active: true
+
+  - id: "documentation-request"
+    name: "Cassini - Documentation request"
+    category: "Documentation"
+    response: |
+      Thanks for the documentation request, {{issueReporter}}! Documentation for Cassini services is maintained in our Confluence space: https://skyscanner.atlassian.net/wiki/spaces/CASSINI
+
+      If you can't find what you're looking for, please provide:
+      1. The specific service or tool you need docs for
+      2. What task you're trying to accomplish
+
+      I'll either point you to existing docs or create new ones if needed.
+    keywords:
+      - documentation
+      - docs
+      - guide
+      - how to
+      - tutorial
+      - help
+      - readme
+    active: true
+
+  - id: "access-request"
+    name: "Cassini - Access request"
+    category: "Access"
+    response: |
+      Hi {{issueReporter}}, I can help with your access request. Please provide:
+      1. Which system/service you need access to (GitHub, AWS, Cortex, etc.)
+      2. Your desired permission level (read, write, admin)
+      3. Business justification
+
+      Access requests typically take 1-2 business days for approval and provisioning.
+    keywords:
+      - access
+      - permission
+      - grant
+      - add user
+      - onboarding
+      - access control
+    active: true
+
+  - id: "data-retention"
+    name: "CAS - Data retention query"
+    category: "Compliance"
+    response: |
+      Hello {{issueReporter}}, regarding data retention policies:
+
+      - **Audit logs**: 90 days in hot storage, 2 years in cold storage (S3 Glacier)
+      - **Metrics**: 30 days in Prometheus, 1 year in long-term storage
+      - **Application logs**: 14 days in CloudWatch, 90 days in S3
+
+      If you need longer retention or data retrieval from cold storage, please provide the specific dataset and time range.
+    keywords:
+      - data retention
+      - retention policy
+      - compliance
+      - archive
+      - logs
+      - audit
+    active: true
+
+  - id: "kubernetes-deployment"
+    name: "Cassini - Kubernetes deployment help"
+    category: "Infrastructure"
+    response: |
+      Hi {{issueReporter}}, I can help with your Kubernetes deployment. Common issues and solutions:
+
+      1. **Pod not starting**: Check logs with `kubectl logs <pod-name>`
+      2. **ImagePullBackOff**: Verify image name and registry access
+      3. **CrashLoopBackOff**: Review application logs and resource limits
+
+      Please share:
+      - Your deployment YAML or manifest
+      - The error message or current pod status
+      - Your namespace
+
+      I'll help troubleshoot or escalate to the platform team if needed.
+    keywords:
+      - Kubernetes
+      - k8s
+      - deployment
+      - pod
+      - container
+      - helm
+    active: true

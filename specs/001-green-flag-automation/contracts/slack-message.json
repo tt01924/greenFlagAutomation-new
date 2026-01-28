@@ -1,0 +1,203 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Slack Escalation Message Schema",
+  "description": "Schema for Slack Block Kit messages sent to Green Flag holder when tickets are escalated",
+  "type": "object",
+  "required": ["channel", "text", "blocks"],
+  "properties": {
+    "channel": {
+      "type": "string",
+      "description": "Slack channel ID or user ID for direct message",
+      "example": "U01234567"
+    },
+    "text": {
+      "type": "string",
+      "description": "Fallback text for notifications",
+      "example": "🚨 Green Flag Ticket Needs Review: CASSINI-1234"
+    },
+    "blocks": {
+      "type": "array",
+      "description": "Slack Block Kit blocks for rich formatting",
+      "items": {
+        "type": "object"
+      }
+    },
+    "unfurl_links": {
+      "type": "boolean",
+      "default": false
+    },
+    "unfurl_media": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "examples": [
+    {
+      "channel": "U01234567",
+      "text": "🚨 Green Flag Ticket Needs Review: CASSINI-1234",
+      "unfurl_links": false,
+      "unfurl_media": false,
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": "🚨 Green Flag Ticket Needs Review"
+          }
+        },
+        {
+          "type": "section",
+          "fields": [
+            {
+              "type": "mrkdwn",
+              "text": "*Ticket:*\n<https://jira.skyscanner.net/browse/CASSINI-1234|CASSINI-1234>"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Reason:*\nLow confidence (highest: 65%)"
+            }
+          ]
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Title:* Need IAM permissions for my project"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Top Matches:*\n1. `IAM Request` (65%) - Mentioned 'permissions' but unclear context\n2. `CQL Request` (58%) - Mentioned 'query' but not Cortex-specific\n3. `Empty S3 Bucket` (32%) - Mentioned 'S3' but not bucket-related"
+          }
+        },
+        {
+          "type": "actions",
+          "elements": [
+            {
+              "type": "button",
+              "text": {
+                "type": "plain_text",
+                "text": "View in Dashboard"
+              },
+              "url": "https://green-flag-automation.skyscanner.net/tickets/CASSINI-1234",
+              "action_id": "view_dashboard"
+            },
+            {
+              "type": "button",
+              "text": {
+                "type": "plain_text",
+                "text": "Mark as Reviewed"
+              },
+              "action_id": "mark_reviewed",
+              "value": "CASSINI-1234",
+              "style": "primary"
+            }
+          ]
+        },
+        {
+          "type": "context",
+          "elements": [
+            {
+              "type": "mrkdwn",
+              "text": "Reporter: John Doe | Created: <!date^1706356800^{date_short_pretty} at {time}|2026-01-27 10:30 UTC>"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "definitions": {
+    "escalation_reasons": {
+      "type": "string",
+      "enum": [
+        "Low confidence (highest: {confidence}%)",
+        "Ambiguous match - multiple responses within 10%",
+        "Sensitive data detected: {keyword}",
+        "Classification timeout after 30s",
+        "Classification service error: {error}",
+        "Follow-up detected on previously processed ticket",
+        "Automation disabled (kill switch)",
+        "Shadow mode active - no responses posted",
+        "Jira API unavailable",
+        "Ticket tone suggests urgency/escalation",
+        "Ticket contains multiple questions"
+      ]
+    },
+    "message_variants": {
+      "low_confidence": {
+        "description": "Sent when no canned response confidence exceeds 80%",
+        "example_blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Reason:* Low confidence - no clear match found\n\n*Top Matches:*\n1. `IAM Request` (65%)\n2. `CQL Request` (58%)\n3. `Empty S3 Bucket` (32%)"
+            }
+          }
+        ]
+      },
+      "ambiguous_match": {
+        "description": "Sent when multiple responses have confidence within 10% of each other",
+        "example_blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Reason:* Ambiguous match - multiple responses equally likely\n\n*Top Matches:*\n1. `Cortex Bug` (78%)\n2. `Cortex Feature Request` (76%)\n\n*Recommendation:* Review ticket manually to determine correct response."
+            }
+          }
+        ]
+      },
+      "sensitive_data": {
+        "description": "Sent when sensitive keywords are detected in ticket content",
+        "example_blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": ":warning: *Reason:* Sensitive data detected - keywords: `password`, `token`\n\n*Action Required:* Review ticket immediately. Do not share sensitive information via Jira comments."
+            }
+          }
+        ]
+      },
+      "classification_timeout": {
+        "description": "Sent when LLM classification times out after 30 seconds",
+        "example_blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": ":hourglass: *Reason:* Classification timeout (30s exceeded)\n\n*System Status:* LLM service may be experiencing issues. Check monitoring dashboard."
+            }
+          }
+        ]
+      },
+      "follow_up": {
+        "description": "Sent when ticket is detected as follow-up to previously processed ticket",
+        "example_blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Reason:* Follow-up detected on previously processed ticket\n\n*Previous Action:* Auto-responded with `IAM Request` on 2026-01-27 at 10:00 UTC\n\n*Note:* System does not respond to follow-ups to avoid conversation loops."
+            }
+          }
+        ]
+      },
+      "kill_switch": {
+        "description": "Sent when automation is disabled via kill switch",
+        "example_blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": ":octagonal_sign: *Reason:* Automation disabled (kill switch activated)\n\n*Disabled By:* jane.smith@skyscanner.net at 2026-01-27 09:00 UTC\n*Disable Reason:* High error rate detected (>5%)\n\n*Action:* All tickets are being escalated until automation is re-enabled."
+            }
+          }
+        ]
+      }
+    }
+  }
+}

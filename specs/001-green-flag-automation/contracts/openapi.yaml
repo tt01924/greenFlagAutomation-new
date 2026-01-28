@@ -1,0 +1,694 @@
+openapi: 3.0.3
+info:
+  title: Green Flag Automation API
+  description: Internal API for Green Flag ticket automation dashboard and webhook handling
+  version: 1.0.0
+  contact:
+    name: Cassini Squad
+    email: cassini@skyscanner.net
+
+servers:
+  - url: https://green-flag-automation.skyscanner.net/api
+    description: Production
+  - url: http://localhost:8000/api
+    description: Local development
+
+tags:
+  - name: webhooks
+    description: Jira webhook ingestion
+  - name: dashboard
+    description: Dashboard API for viewing and managing tickets
+  - name: admin
+    description: Administrative operations (kill switch, config)
+  - name: health
+    description: Health check and monitoring
+
+paths:
+  # Webhook Endpoints
+  /webhooks/jira:
+    post:
+      tags: [webhooks]
+      summary: Receive Jira webhook events
+      description: |
+        Ingests Jira webhook events for new/updated Green Flag tickets.
+        Validates webhook signature and enqueues ticket for processing.
+      operationId: receiveJiraWebhook
+      security:
+        - webhookSignature: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JiraWebhookEvent'
+      responses:
+        '202':
+          description: Webhook accepted and queued for processing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "queued"
+                  ticket_id:
+                    type: string
+                    example: "12345678"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # Dashboard Endpoints
+  /dashboard/tickets:
+    get:
+      tags: [dashboard]
+      summary: List processed tickets
+      description: Retrieve paginated list of tickets processed by the system
+      operationId: listTickets
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: [auto_respond, escalate, shadow, retraction]
+          description: Filter by action type
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter tickets created after this timestamp
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: List of processed tickets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tickets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProcessedTicket'
+                  total:
+                    type: integer
+                    example: 127
+                  limit:
+                    type: integer
+                    example: 50
+                  offset:
+                    type: integer
+                    example: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/tickets/{ticketId}:
+    get:
+      tags: [dashboard]
+      summary: Get ticket details
+      description: Retrieve full details and audit history for a specific ticket
+      operationId: getTicketDetail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "CASSINI-1234"
+      responses:
+        '200':
+          description: Ticket details with audit history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/tickets/{ticketId}/retract:
+    post:
+      tags: [dashboard]
+      summary: Retract automated response
+      description: |
+        Retract an automated response posted to Jira. Only allowed within 5 minutes
+        of the original response. Edits the Jira comment and posts a retraction notice.
+      operationId: retractResponse
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "CASSINI-1234"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Optional reason for retraction
+                  example: "Incorrect response - needs human review"
+      responses:
+        '200':
+          description: Response successfully retracted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "retracted"
+                  retracted_at:
+                    type: string
+                    format: date-time
+                  retracted_by:
+                    type: string
+                    example: "user@skyscanner.net"
+        '400':
+          description: Retraction not allowed (e.g., >5 minutes elapsed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/escalations:
+    get:
+      tags: [dashboard]
+      summary: List escalated tickets
+      description: Retrieve tickets that were escalated to humans
+      operationId: listEscalations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: overdue_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Filter to only show tickets >4h old (overdue for review)
+      responses:
+        '200':
+          description: List of escalated tickets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  escalations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Escalation'
+                  overdue_count:
+                    type: integer
+                    description: Number of escalations >4h old
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/reports/weekly:
+    get:
+      tags: [dashboard]
+      summary: Get weekly accuracy report
+      description: Retrieve statistics for the past 7 days
+      operationId: getWeeklyReport
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Weekly report with statistics and charts data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyReport'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Admin Endpoints
+  /admin/kill-switch:
+    get:
+      tags: [admin]
+      summary: Get kill switch status
+      description: Check if automation is enabled or disabled
+      operationId: getKillSwitchStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Kill switch status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  automation_enabled:
+                    type: boolean
+                  disabled_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  disabled_by:
+                    type: string
+                    nullable: true
+                  disable_reason:
+                    type: string
+                    nullable: true
+    post:
+      tags: [admin]
+      summary: Toggle kill switch
+      description: |
+        Enable or disable automation. Requires Cassini squad membership.
+        When disabled, all tickets are escalated to humans.
+      operationId: toggleKillSwitch
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled:
+                  type: boolean
+                  description: true to enable automation, false to disable
+                reason:
+                  type: string
+                  description: Required if disabling
+                  example: "High error rate detected"
+      responses:
+        '200':
+          description: Kill switch toggled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  automation_enabled:
+                    type: boolean
+                  updated_at:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/shadow-mode:
+    get:
+      tags: [admin]
+      summary: Get shadow mode status
+      description: Check if system is in shadow mode (48h after config change)
+      operationId: getShadowModeStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Shadow mode status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shadow_mode_active:
+                    type: boolean
+                  shadow_mode_until:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  config_version:
+                    type: string
+                  time_remaining:
+                    type: string
+                    description: Human-readable time remaining
+                    example: "23 hours 45 minutes"
+
+  # Health Endpoints
+  /health:
+    get:
+      tags: [health]
+      summary: Health check
+      description: Basic health check for load balancer
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /health/ready:
+    get:
+      tags: [health]
+      summary: Readiness check
+      description: Check if service is ready to accept traffic (DB connected, Redis available)
+      operationId: readinessCheck
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ready"
+                  checks:
+                    type: object
+                    properties:
+                      database:
+                        type: boolean
+                      redis:
+                        type: boolean
+                      jira_api:
+                        type: boolean
+                      slack_api:
+                        type: boolean
+        '503':
+          description: Service not ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "not_ready"
+                  checks:
+                    type: object
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from SSO (Okta/Auth0)
+
+    webhookSignature:
+      type: apiKey
+      in: header
+      name: X-Hub-Signature-256
+      description: HMAC-SHA256 signature of request body
+
+  schemas:
+    JiraWebhookEvent:
+      type: object
+      description: Jira webhook payload (simplified - see jira-webhook.json for full schema)
+      required: [webhookEvent, issue]
+      properties:
+        webhookEvent:
+          type: string
+          example: "jira:issue_created"
+        issue:
+          $ref: '#/components/schemas/JiraIssue'
+
+    JiraIssue:
+      type: object
+      required: [id, key, fields]
+      properties:
+        id:
+          type: string
+          example: "12345678"
+        key:
+          type: string
+          example: "CASSINI-1234"
+        fields:
+          type: object
+          properties:
+            summary:
+              type: string
+            description:
+              type: string
+            reporter:
+              $ref: '#/components/schemas/JiraUser'
+            assignee:
+              $ref: '#/components/schemas/JiraUser'
+
+    JiraUser:
+      type: object
+      properties:
+        accountId:
+          type: string
+        displayName:
+          type: string
+        emailAddress:
+          type: string
+
+    ProcessedTicket:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ticket_key:
+          type: string
+          example: "CASSINI-1234"
+        ticket_title:
+          type: string
+        action:
+          type: string
+          enum: [auto_respond, escalate, shadow, retraction]
+        matched_response_id:
+          type: string
+          nullable: true
+        matched_response_name:
+          type: string
+          nullable: true
+        top_confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        escalation_reason:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        can_retract:
+          type: boolean
+          description: Whether retraction is still allowed (<5 min)
+        is_retracted:
+          type: boolean
+
+    TicketDetail:
+      type: object
+      properties:
+        ticket:
+          $ref: '#/components/schemas/ProcessedTicket'
+        ticket_snapshot:
+          type: object
+          description: Full Jira ticket payload
+        confidence_scores:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              confidence:
+                type: number
+                format: float
+              reasoning:
+                type: string
+        audit_history:
+          type: array
+          items:
+            type: object
+            properties:
+              action:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              user:
+                type: string
+                nullable: true
+
+    Escalation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ticket_key:
+          type: string
+        ticket_title:
+          type: string
+        escalation_reason:
+          type: string
+        top_match_response_id:
+          type: string
+          nullable: true
+        top_confidence_score:
+          type: number
+          format: float
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        is_overdue:
+          type: boolean
+          description: True if >4h old
+        jira_link:
+          type: string
+          format: uri
+
+    WeeklyReport:
+      type: object
+      properties:
+        date_range:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date
+            end:
+              type: string
+              format: date
+        summary:
+          type: object
+          properties:
+            total_tickets:
+              type: integer
+            auto_responded:
+              type: integer
+            escalated:
+              type: integer
+            retracted:
+              type: integer
+            automation_rate:
+              type: number
+              format: float
+              description: Percentage of tickets auto-responded
+            false_positive_rate:
+              type: number
+              format: float
+              description: Percentage of auto-responses retracted
+        daily_breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              auto_count:
+                type: integer
+              escalate_count:
+                type: integer
+        confidence_distribution:
+          type: object
+          description: Histogram of confidence scores
+          properties:
+            "0.0-0.2":
+              type: integer
+            "0.2-0.4":
+              type: integer
+            "0.4-0.6":
+              type: integer
+            "0.6-0.8":
+              type: integer
+            "0.8-1.0":
+              type: integer
+
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          example: "validation_error"
+        message:
+          type: string
+          example: "Invalid request parameters"
+        details:
+          type: object
+          additionalProperties: true
+
+  responses:
+    BadRequest:
+      description: Bad request (validation error)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized (invalid or missing authentication)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Forbidden (authenticated but not authorized for this resource)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    TooManyRequests:
+      description: Too many requests (rate limit exceeded)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
