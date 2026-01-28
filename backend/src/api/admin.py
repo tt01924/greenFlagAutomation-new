@@ -317,3 +317,59 @@ async def enable_automation(db: Session = Depends(get_db)) -> Dict[str, Any]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to enable automation",
         )
+
+
+@router.post("/admin/circuit-breaker/trigger", status_code=status.HTTP_200_OK)
+async def trigger_circuit_breaker(
+    reason: str = "High error rate detected",
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """Trigger circuit breaker - automatically disable automation.
+
+    This endpoint is called by Prometheus Alertmanager when error rates exceed thresholds.
+
+    Args:
+        reason: Reason for triggering circuit breaker
+        db: Database session
+
+    Returns:
+        Circuit breaker status
+
+    Constitutional requirement: FR-021 (Automated error rate monitoring)
+    """
+    try:
+        config = db.query(SystemConfig).filter(SystemConfig.id == 1).first()
+
+        if not config:
+            # Create config if it doesn't exist
+            config = SystemConfig(
+                id=1,
+                automation_enabled=False,
+            )
+            db.add(config)
+            db.flush()
+        else:
+            config.automation_enabled = False
+
+        db.commit()
+        db.refresh(config)
+
+        logger.critical(
+            f"🚨 CIRCUIT BREAKER TRIGGERED - Automation disabled. Reason: {reason}"
+        )
+
+        return {
+            "circuit_breaker_triggered": True,
+            "automation_enabled": False,
+            "reason": reason,
+            "message": f"Circuit breaker triggered: {reason}. Automation disabled.",
+            "action_required": "Manual investigation and re-enable required via dashboard",
+        }
+
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to trigger circuit breaker: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to trigger circuit breaker",
+        )

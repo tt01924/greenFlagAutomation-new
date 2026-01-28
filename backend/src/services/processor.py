@@ -15,6 +15,7 @@ from src.services.template_renderer import TemplateRenderer
 from src.services.audit_logger import AuditLogger
 from src.services.slack_client import SlackClient
 from src.services.escalation_service import EscalationService
+from src.services.metrics import MetricsService
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -210,6 +211,10 @@ class TicketProcessor:
 
         except Exception as e:
             logger.error(f"Unexpected error processing {ticket_key}: {e}", exc_info=True)
+
+            # Record failure metrics
+            MetricsService.record_ticket_failed("processing_error")
+
             # Fail-safe: escalate on any error (FR-022)
             return self._escalate(
                 ticket_id=ticket_id,
@@ -319,6 +324,15 @@ class TicketProcessor:
 
         logger.info(f"Auto-responded to {ticket_key} with {matched_response.id}")
 
+        # Record metrics
+        MetricsService.record_ticket_processed("auto_respond", "success")
+        MetricsService.record_processing_duration(processing_duration_ms / 1000.0)
+        if confidence_scores:
+            max_confidence = max(
+                score["confidence"] for score in confidence_scores.values()
+            )
+            MetricsService.record_classification_confidence(max_confidence)
+
         return {
             "status": "auto_responded",
             "ticket_key": ticket_key,
@@ -354,6 +368,15 @@ class TicketProcessor:
         logger.info(
             f"Shadow mode: Would have responded to {ticket_key} with {matched_response.id}"
         )
+
+        # Record metrics
+        MetricsService.record_ticket_processed("shadow", "success")
+        MetricsService.record_processing_duration(processing_duration_ms / 1000.0)
+        if confidence_scores:
+            max_confidence = max(
+                score["confidence"] for score in confidence_scores.values()
+            )
+            MetricsService.record_classification_confidence(max_confidence)
 
         return {
             "status": "shadow",
@@ -405,6 +428,19 @@ class TicketProcessor:
             # Don't fail the escalation if Slack fails - it's queued for retry
 
         logger.info(f"Escalated {ticket_key}: {reason}")
+
+        # Record metrics
+        MetricsService.record_ticket_processed("escalate", "success")
+        MetricsService.record_escalation(reason)
+        if processing_duration_ms:
+            MetricsService.record_processing_duration(processing_duration_ms / 1000.0)
+        if confidence_scores:
+            max_confidence = max(
+                (score["confidence"] for score in confidence_scores.values()),
+                default=0,
+            )
+            if max_confidence > 0:
+                MetricsService.record_classification_confidence(max_confidence)
 
         return {
             "status": "escalated",

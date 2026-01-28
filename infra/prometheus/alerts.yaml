@@ -1,0 +1,194 @@
+---
+# Prometheus alerting rules for Green Flag Automation
+# Constitutional requirement: FR-021 (Error rate monitoring)
+
+groups:
+  - name: green_flag_automation
+    interval: 30s
+    rules:
+      # High error rate - triggers circuit breaker
+      - alert: HighTicketProcessingErrorRate
+        expr: |
+          (
+            rate(tickets_failed_total[5m])
+            /
+            rate(tickets_processed_total[5m])
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          component: ticket_processor
+        annotations:
+          summary: "High ticket processing error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%). This may indicate a systemic issue with classification, Jira API, or other dependencies."
+          action: "Circuit breaker should be triggered to disable automation. Check logs for error patterns."
+
+      # Escalation queue building up
+      - alert: EscalationQueueBacklog
+        expr: escalation_queue_depth > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: escalation
+        annotations:
+          summary: "Escalation queue backlog building up"
+          description: "{{ $value }} unresolved escalations in the queue. Green Flag holder may need assistance."
+          action: "Review escalations dashboard and notify additional team members if needed."
+
+      # Many overdue escalations
+      - alert: HighOverdueEscalationCount
+        expr: escalation_overdue_count > 5
+        for: 10m
+        labels:
+          severity: warning
+          component: escalation
+        annotations:
+          summary: "Multiple escalations are overdue (>4 hours)"
+          description: "{{ $value }} escalations have been waiting for more than 4 hours without resolution."
+          action: "Notify Green Flag holder via Slack. Escalations may need immediate attention."
+
+      # High retraction rate (false positives)
+      - alert: HighRetractionRate
+        expr: |
+          (
+            rate(tickets_retracted_total[1h])
+            /
+            rate(tickets_auto_responded_total[1h])
+          ) > 0.05
+        for: 15m
+        labels:
+          severity: warning
+          component: classification
+        annotations:
+          summary: "High retraction rate detected"
+          description: "{{ $value | humanizePercentage }} of automated responses are being retracted (threshold: 5%). This indicates classification accuracy issues."
+          action: "Review recent retractions to identify patterns. Consider enabling shadow mode while investigating."
+
+      # Automation disabled for extended period
+      - alert: AutomationDisabledExtended
+        expr: automation_enabled == 0
+        for: 30m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Automation has been disabled for 30+ minutes"
+          description: "Kill switch is active. All tickets are being escalated to human review."
+          action: "Verify if this is intentional. If resolved, re-enable automation via dashboard."
+
+      # Shadow mode active for extended period
+      - alert: ShadowModeExtended
+        expr: shadow_mode_active == 1
+        for: 24h
+        labels:
+          severity: info
+          component: system
+        annotations:
+          summary: "Shadow mode has been active for 24+ hours"
+          description: "System is in shadow mode. Tickets are being classified but not responded to. Remaining: {{ $value }}h."
+          action: "Verify shadow mode is expected. Check if config changes have been deployed successfully."
+
+      # Slow ticket processing
+      - alert: SlowTicketProcessing
+        expr: |
+          histogram_quantile(0.95,
+            rate(ticket_processing_duration_seconds_bucket[5m])
+          ) > 30
+        for: 10m
+        labels:
+          severity: warning
+          component: performance
+        annotations:
+          summary: "Ticket processing is slow (P95 > 30s)"
+          description: "95th percentile processing time is {{ $value }}s. Expected: <10s for most tickets."
+          action: "Check LLM API latency, Jira API performance, and worker queue depth."
+
+      # External service errors - Jira
+      - alert: JiraServiceErrors
+        expr: |
+          (
+            rate(external_service_request_total{service="jira",status="failure"}[5m])
+            /
+            rate(external_service_request_total{service="jira"}[5m])
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: jira_client
+        annotations:
+          summary: "High error rate from Jira API"
+          description: "{{ $value | humanizePercentage }} of Jira API requests are failing."
+          action: "Check Jira API status. Verify API credentials and rate limits."
+
+      # External service errors - Slack
+      - alert: SlackServiceErrors
+        expr: |
+          (
+            rate(external_service_request_total{service="slack",status="failure"}[5m])
+            /
+            rate(external_service_request_total{service="slack"}[5m])
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: slack_client
+        annotations:
+          summary: "High error rate from Slack API"
+          description: "{{ $value | humanizePercentage }} of Slack API requests are failing. Escalations may not be delivered."
+          action: "Check Slack API status. Verify bot token. Escalations will be retried."
+
+      # External service errors - LLM (Anthropic/OpenAI)
+      - alert: LLMServiceErrors
+        expr: |
+          (
+            rate(external_service_request_total{service=~"anthropic|openai",status="failure"}[5m])
+            /
+            rate(external_service_request_total{service=~"anthropic|openai"}[5m])
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: llm_classifier
+        annotations:
+          summary: "High error rate from LLM API"
+          description: "{{ $value | humanizePercentage }} of LLM classification requests are failing."
+          action: "Check Anthropic/OpenAI API status. Verify API keys and rate limits. Tickets will be escalated on classification errors."
+
+      # Low classification confidence trend
+      - alert: LowClassificationConfidence
+        expr: |
+          histogram_quantile(0.5,
+            rate(classification_confidence_score_bucket[1h])
+          ) < 0.6
+        for: 1h
+        labels:
+          severity: info
+          component: classification
+        annotations:
+          summary: "Median classification confidence is low"
+          description: "Median confidence score is {{ $value }} over the last hour. Expected: >0.7 for healthy classification."
+          action: "Review recent ticket types. May indicate new ticket patterns not covered by canned responses."
+
+      # No tickets processed (system idle or stuck)
+      - alert: NoTicketsProcessed
+        expr: rate(tickets_processed_total[10m]) == 0
+        for: 30m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "No tickets have been processed for 30 minutes"
+          description: "System may be idle (no incoming tickets) or worker may be stuck."
+          action: "Check worker logs. Verify Jira webhook is delivering events. Check Redis queue depth."
+
+      # Circuit breaker triggered
+      - alert: CircuitBreakerTriggered
+        expr: automation_enabled == 0 and shadow_mode_active == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: circuit_breaker
+        annotations:
+          summary: "Circuit breaker has been triggered"
+          description: "Automation has been automatically disabled due to high error rate or external trigger."
+          action: "Investigate root cause in logs. Manual intervention required to re-enable automation."

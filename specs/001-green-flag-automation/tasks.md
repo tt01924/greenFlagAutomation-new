@@ -208,13 +208,13 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 ### Backend Implementation
 
-- [ ] T076 [P] Implement kill switch endpoints in backend/src/api/admin.py (GET/POST /admin/kill-switch per contracts/openapi.yaml)
-- [ ] T077 [P] Create KillSwitch component in frontend/src/components/KillSwitch.tsx (toggle button with reason input)
-- [ ] T078 Add kill switch page in frontend/src/pages/Settings.tsx (includes kill switch component)
-- [ ] T079 [P] Implement Prometheus metrics in backend/src/services/metrics.py (tickets_processed_total, tickets_failed_total, automation_enabled gauge)
-- [ ] T080 [P] Create Prometheus alerting rules in infra/prometheus/alerts.yaml (5% error rate threshold)
-- [ ] T081 [P] Implement circuit breaker endpoint in backend/src/api/admin.py (POST /circuit-breaker/disable called by Alertmanager)
-- [ ] T082 Add error rate monitoring to processor.py (increment failure counter on exceptions)
+- [x] T076 [P] Implement kill switch endpoints in backend/src/api/admin.py (GET/POST /admin/kill-switch per contracts/openapi.yaml)
+- [x] T077 [P] Create KillSwitch component in frontend/src/components/KillSwitch.tsx (toggle button with reason input)
+- [x] T078 Add kill switch page in frontend/src/pages/Settings.tsx (includes kill switch component)
+- [x] T079 [P] Implement Prometheus metrics in backend/src/services/metrics.py (tickets_processed_total, tickets_failed_total, automation_enabled gauge)
+- [x] T080 [P] Create Prometheus alerting rules in infra/prometheus/alerts.yaml (5% error rate threshold)
+- [x] T081 [P] Implement circuit breaker endpoint in backend/src/api/admin.py (POST /circuit-breaker/disable called by Alertmanager)
+- [x] T082 Add error rate monitoring to processor.py (increment failure counter on exceptions)
 
 **Checkpoint**: Kill switch and error monitoring fully operational - automation can be disabled manually or automatically
 
