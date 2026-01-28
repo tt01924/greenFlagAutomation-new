@@ -96,16 +96,16 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 ### Implementation for User Story 1
 
-- [ ] T034 [P] [US1] Implement Jira webhook endpoint in backend/src/api/webhooks.py per contracts/jira-webhook.json
-- [ ] T035 [P] [US1] Implement webhook signature verification in backend/src/middleware/webhook_auth.py
-- [ ] T036 [US1] Implement ticket processor orchestration in backend/src/services/processor.py (FR-001 to FR-007)
-- [ ] T037 [US1] Implement sensitive data scanner in backend/src/services/sensitive_data_scanner.py (FR-010 keyword detection)
-- [ ] T038 [US1] Implement confidence evaluation logic in backend/src/services/confidence_evaluator.py (80% threshold, 10% ambiguity)
-- [ ] T039 [US1] Implement template variable substitution in backend/src/services/template_renderer.py ({{issueReporter}}, {{issueAssignee}})
-- [ ] T040 [US1] Implement response posting to Jira in backend/src/services/response_poster.py (FR-004 to FR-007)
-- [ ] T041 [US1] Create ticket processor worker in backend/src/workers/ticket_processor_worker.py (Redis queue consumer)
-- [ ] T042 [US1] Add follow-up detection logic in backend/src/services/processor.py (FR-012 - check processed_tickets table)
-- [ ] T043 [US1] Implement shadow mode state management in backend/src/services/shadow_mode.py (48h check per data-model.md)
+- [x] T034 [P] [US1] Implement Jira webhook endpoint in backend/src/api/webhooks.py per contracts/jira-webhook.json
+- [x] T035 [P] [US1] Implement webhook signature verification in backend/src/middleware/webhook_auth.py
+- [x] T036 [US1] Implement ticket processor orchestration in backend/src/services/processor.py (FR-001 to FR-007)
+- [x] T037 [US1] Implement sensitive data scanner in backend/src/services/sensitive_data_scanner.py (FR-010 keyword detection)
+- [x] T038 [US1] Implement confidence evaluation logic in backend/src/services/confidence_evaluator.py (80% threshold, 10% ambiguity)
+- [x] T039 [US1] Implement template variable substitution in backend/src/services/template_renderer.py ({{issueReporter}}, {{issueAssignee}})
+- [x] T040 [US1] Implement response posting to Jira in backend/src/services/response_poster.py (FR-004 to FR-007)
+- [x] T041 [US1] Create ticket processor worker in backend/src/workers/ticket_processor_worker.py (Redis queue consumer)
+- [x] T042 [US1] Add follow-up detection logic in backend/src/services/processor.py (FR-012 - check processed_tickets table)
+- [x] T043 [US1] Implement shadow mode state management in backend/src/services/shadow_mode.py (48h check per data-model.md)
 
 ### Integration Tests for User Story 1
 
