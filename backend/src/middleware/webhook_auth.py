@@ -1,4 +1,5 @@
 """Webhook authentication middleware for Jira webhooks."""
+
 import hmac
 import hashlib
 import logging
@@ -11,9 +12,7 @@ from src.config.settings import settings
 logger = logging.getLogger(__name__)
 
 
-async def verify_jira_webhook_signature(
-    request: Request, call_next: Callable
-) -> Response:
+async def verify_jira_webhook_signature(request: Request, call_next: Callable) -> Response:
     """Verify Jira webhook signature.
 
     Args:

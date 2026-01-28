@@ -1,4 +1,5 @@
 """Response poster for posting canned responses to Jira."""
+
 import logging
 from typing import Dict, Any
 from datetime import datetime
@@ -49,9 +50,7 @@ class ResponsePoster:
             issue_assignee=issue_assignee,
         )
 
-        logger.info(
-            f"Posting canned response '{canned_response.id}' to {ticket_key}"
-        )
+        logger.info(f"Posting canned response '{canned_response.id}' to {ticket_key}")
 
         try:
             # Post comment to Jira
@@ -66,9 +65,7 @@ class ResponsePoster:
             comment_id = comment.get("id")
             posted_at = datetime.utcnow()
 
-            logger.info(
-                f"Successfully posted response to {ticket_key} (comment_id: {comment_id})"
-            )
+            logger.info(f"Successfully posted response to {ticket_key} (comment_id: {comment_id})")
 
             return {
                 "comment_id": comment_id,
@@ -109,7 +106,5 @@ class ResponsePoster:
             logger.info(f"Posted shadow mode notification to {ticket_key}")
 
         except Exception as e:
-            logger.warning(
-                f"Failed to post shadow mode comment to {ticket_key}: {e}"
-            )
+            logger.warning(f"Failed to post shadow mode comment to {ticket_key}: {e}")
             # Don't raise - shadow mode comments are non-critical

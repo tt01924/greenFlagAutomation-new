@@ -1,4 +1,5 @@
 """Escalation service for handling ticket escalations with retry logic."""
+
 import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -6,7 +7,6 @@ import json
 
 from src.services.slack_client import SlackClient
 from src.services.queue import TicketQueue
-from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -141,9 +141,7 @@ class EscalationService:
             retry_count: Current retry attempt count
         """
         if retry_count >= self.MAX_RETRIES:
-            logger.error(
-                f"Max retries ({self.MAX_RETRIES}) reached for escalation of {ticket_key}"
-            )
+            logger.error(f"Max retries ({self.MAX_RETRIES}) reached for escalation of {ticket_key}")
             return
 
         retry_data = {
@@ -200,7 +198,7 @@ class EscalationService:
 
                 # Attempt to send escalation again
                 try:
-                    response = self.slack_client.send_escalation_message(
+                    self.slack_client.send_escalation_message(
                         channel_or_user_id=retry_data["channel_or_user_id"],
                         ticket_key=retry_data["ticket_key"],
                         ticket_title=retry_data["ticket_title"],
@@ -220,9 +218,7 @@ class EscalationService:
                     sent_count += 1
 
                 except Exception as e:
-                    logger.error(
-                        f"Retry failed for {retry_data['ticket_key']}: {e}"
-                    )
+                    logger.error(f"Retry failed for {retry_data['ticket_key']}: {e}")
 
                     # Re-queue if not max retries
                     if retry_data["retry_count"] < self.MAX_RETRIES:

@@ -1,4 +1,5 @@
 """Shadow mode state management."""
+
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple
@@ -30,9 +31,7 @@ class ShadowModeManager:
         """
         # Calculate shadow mode end time
         activated_at = config.activated_at.replace(tzinfo=timezone.utc)
-        shadow_mode_until = activated_at + timedelta(
-            hours=config.shadow_mode_hours
-        )
+        shadow_mode_until = activated_at + timedelta(hours=config.shadow_mode_hours)
 
         now = datetime.now(timezone.utc)
         is_shadow_mode = now < shadow_mode_until
@@ -47,9 +46,7 @@ class ShadowModeManager:
             logger.debug("Shadow mode not active")
 
         # Update system_config table
-        ShadowModeManager._update_system_config(
-            db, is_shadow_mode, shadow_mode_until
-        )
+        ShadowModeManager._update_system_config(db, is_shadow_mode, shadow_mode_until)
 
         return is_shadow_mode, shadow_mode_until
 
@@ -80,9 +77,7 @@ class ShadowModeManager:
 
             db.commit()
 
-            logger.debug(
-                f"Updated system_config: shadow_mode_active={is_shadow_mode}"
-            )
+            logger.debug(f"Updated system_config: shadow_mode_active={is_shadow_mode}")
 
         except Exception as e:
             db.rollback()
@@ -100,9 +95,7 @@ class ShadowModeManager:
             ValueError: If config is invalid
         """
         try:
-            config = CannedResponseConfig.load_from_yaml(
-                settings.CANNED_RESPONSES_PATH
-            )
+            config = CannedResponseConfig.load_from_yaml(settings.CANNED_RESPONSES_PATH)
             logger.info(
                 f"Loaded canned response config version {config.version} "
                 f"with {len(config.canned_responses)} responses"

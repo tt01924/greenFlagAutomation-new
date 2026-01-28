@@ -1,7 +1,7 @@
 /**
  * WeeklyReport component - displays weekly statistics and trends
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../services/api'
 import type { WeeklyReport as WeeklyReportType } from '../types'
 
@@ -11,23 +11,24 @@ export function WeeklyReport() {
   const [error, setError] = useState<string | null>(null)
   const [weeksAgo, setWeeksAgo] = useState(0)
 
-  useEffect(() => {
-    loadReport()
-  }, [weeksAgo])
-
-  const loadReport = async () => {
+  const loadReport = useCallback(async () => {
     setLoading(true)
     setError(null)
 
     try {
       const data = await apiClient.getWeeklyReport(weeksAgo)
       setReport(data)
-    } catch (err: any) {
-      setError(err.message || 'Failed to load weekly report')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Failed to load weekly report')
     } finally {
       setLoading(false)
     }
-  }
+  }, [weeksAgo])
+
+  useEffect(() => {
+    loadReport()
+  }, [loadReport])
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString)

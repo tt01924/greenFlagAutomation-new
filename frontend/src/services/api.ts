@@ -34,7 +34,7 @@ class ApiClient {
     offset: number = 0,
     action?: string
   ): Promise<{ tickets: Ticket[]; total: number; limit: number; offset: number }> {
-    const params: any = { limit, offset }
+    const params: Record<string, unknown> = { limit, offset }
     if (action) params.action = action
 
     const response = await this.client.get('/dashboard/tickets', { params })
@@ -46,7 +46,7 @@ class ApiClient {
     return response.data
   }
 
-  async retractResponse(ticketKey: string, retractedBy: string): Promise<any> {
+  async retractResponse(ticketKey: string, retractedBy: string): Promise<{ success: boolean; message: string }> {
     const response = await this.client.post(
       `/dashboard/tickets/${ticketKey}/retract`,
       null,
@@ -63,7 +63,7 @@ class ApiClient {
     limit: number = 50,
     offset: number = 0
   ): Promise<{ escalations: Escalation[]; total: number; limit: number; offset: number }> {
-    const params: any = { limit, offset }
+    const params: Record<string, unknown> = { limit, offset }
     if (overdueOnly) params.overdue_only = true
 
     const response = await this.client.get('/dashboard/escalations', { params })
@@ -79,7 +79,14 @@ class ApiClient {
   }
 
   // Admin/system endpoints
-  async getShadowModeStatus(): Promise<any> {
+  async getShadowModeStatus(): Promise<{
+    shadow_mode_active: boolean
+    shadow_mode_until: string | null
+    time_remaining_seconds: number | null
+    time_remaining_hours: number | null
+    automation_enabled: boolean
+    config_version: string
+  }> {
     const response = await this.client.get('/admin/shadow-mode')
     return response.data
   }
@@ -95,7 +102,7 @@ class ApiClient {
     return response.data
   }
 
-  async readinessCheck(): Promise<{ status: string; checks: any }> {
+  async readinessCheck(): Promise<{ status: string; checks: Record<string, unknown> }> {
     const response = await this.client.get('/health/ready')
     return response.data
   }

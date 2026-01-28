@@ -7,6 +7,7 @@ This test simulates escalation scenarios:
 4. Kill switch activated
 5. Classification errors
 """
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
@@ -33,8 +34,12 @@ def test_escalation_low_confidence():
             description="Help!",
         )
 
-        with patch("src.services.classifier.LLMClassifier") as mock_classifier_class, \
-             patch("src.services.escalation_service.EscalationService.escalate_ticket") as mock_escalate:
+        with (
+            patch("src.services.classifier.LLMClassifier") as mock_classifier_class,
+            patch(
+                "src.services.escalation_service.EscalationService.escalate_ticket"
+            ) as mock_escalate,
+        ):
 
             # Low confidence classification
             mock_classifier = Mock()
@@ -70,9 +75,8 @@ def test_escalation_low_confidence():
 
             # Verify audit log
             from src.models.audit_log import AuditLog
-            audit_log = db.query(AuditLog).filter(
-                AuditLog.ticket_key == "CASSINI-2001"
-            ).first()
+
+            audit_log = db.query(AuditLog).filter(AuditLog.ticket_key == "CASSINI-2001").first()
 
             assert audit_log is not None
             assert audit_log.action == "escalate"
@@ -94,8 +98,12 @@ def test_escalation_ambiguous_match():
             description="Cortex is not working as expected",
         )
 
-        with patch("src.services.classifier.LLMClassifier") as mock_classifier_class, \
-             patch("src.services.escalation_service.EscalationService.escalate_ticket") as mock_escalate:
+        with (
+            patch("src.services.classifier.LLMClassifier") as mock_classifier_class,
+            patch(
+                "src.services.escalation_service.EscalationService.escalate_ticket"
+            ) as mock_escalate,
+        ):
 
             # Ambiguous classification (two high scores within 10%)
             mock_classifier = Mock()
@@ -146,7 +154,9 @@ def test_escalation_sensitive_data():
             description="My password is hunter2 and my API key is sk-abc123",
         )
 
-        with patch("src.services.escalation_service.EscalationService.escalate_ticket") as mock_escalate:
+        with patch(
+            "src.services.escalation_service.EscalationService.escalate_ticket"
+        ) as mock_escalate:
 
             # Process ticket (should escalate before classification)
             processor = TicketProcessor(db)
@@ -159,8 +169,10 @@ def test_escalation_sensitive_data():
             # Verify escalation
             mock_escalate.assert_called_once()
             call_args = mock_escalate.call_args[1]
-            assert "password" in call_args["escalation_reason"].lower() or \
-                   "api key" in call_args["escalation_reason"].lower()
+            assert (
+                "password" in call_args["escalation_reason"].lower()
+                or "api key" in call_args["escalation_reason"].lower()
+            )
 
     finally:
         drop_test_db(db)
@@ -174,6 +186,7 @@ def test_escalation_kill_switch():
     try:
         # Set kill switch to disabled
         from src.models.system_config import SystemConfig
+
         system_config = SystemConfig(
             id=1,
             automation_enabled=False,
@@ -187,7 +200,9 @@ def test_escalation_kill_switch():
             summary="Regular ticket",
         )
 
-        with patch("src.services.escalation_service.EscalationService.escalate_ticket") as mock_escalate:
+        with patch(
+            "src.services.escalation_service.EscalationService.escalate_ticket"
+        ) as mock_escalate:
 
             # Process ticket
             processor = TicketProcessor(db)
@@ -195,8 +210,10 @@ def test_escalation_kill_switch():
 
             # Assertions
             assert result["status"] == "escalated"
-            assert "kill switch" in result["reason"].lower() or \
-                   "automation disabled" in result["reason"].lower()
+            assert (
+                "kill switch" in result["reason"].lower()
+                or "automation disabled" in result["reason"].lower()
+            )
 
             # Verify escalation
             mock_escalate.assert_called_once()
@@ -216,8 +233,12 @@ def test_escalation_classification_error():
             summary="Test ticket",
         )
 
-        with patch("src.services.classifier.LLMClassifier") as mock_classifier_class, \
-             patch("src.services.escalation_service.EscalationService.escalate_ticket") as mock_escalate:
+        with (
+            patch("src.services.classifier.LLMClassifier") as mock_classifier_class,
+            patch(
+                "src.services.escalation_service.EscalationService.escalate_ticket"
+            ) as mock_escalate,
+        ):
 
             # Classification raises exception
             mock_classifier = Mock()
@@ -230,8 +251,7 @@ def test_escalation_classification_error():
 
             # Assertions
             assert result["status"] == "escalated"
-            assert "timeout" in result["reason"].lower() or \
-                   "error" in result["reason"].lower()
+            assert "timeout" in result["reason"].lower() or "error" in result["reason"].lower()
 
             # Verify escalation
             mock_escalate.assert_called_once()
@@ -252,8 +272,12 @@ def test_escalation_urgent_tone():
             description="CRITICAL issue, needs immediate attention!",
         )
 
-        with patch("src.services.classifier.LLMClassifier") as mock_classifier_class, \
-             patch("src.services.escalation_service.EscalationService.escalate_ticket") as mock_escalate:
+        with (
+            patch("src.services.classifier.LLMClassifier") as mock_classifier_class,
+            patch(
+                "src.services.escalation_service.EscalationService.escalate_ticket"
+            ) as mock_escalate,
+        ):
 
             # Classification with urgent flag
             mock_classifier = Mock()

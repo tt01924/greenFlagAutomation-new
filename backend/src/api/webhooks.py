@@ -1,4 +1,5 @@
 """Jira webhook endpoints."""
+
 import logging
 from typing import Dict, Any
 from fastapi import APIRouter, Request, status, Depends
@@ -82,9 +83,7 @@ async def jira_webhook(
             priority=priority,
         )
 
-        logger.info(
-            f"Enqueued ticket {ticket_key} for processing (priority: {priority})"
-        )
+        logger.info(f"Enqueued ticket {ticket_key} for processing (priority: {priority})")
 
         return {
             "status": "queued",

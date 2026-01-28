@@ -1,7 +1,7 @@
 /**
  * ShadowModeStatus component - displays banner when shadow mode is active
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../services/api'
 
 interface ShadowModeStatusData {
@@ -18,24 +18,25 @@ export function ShadowModeStatus() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const loadStatus = useCallback(async () => {
+    try {
+      const data = await apiClient.getShadowModeStatus()
+      setStatus(data)
+      setError(null)
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Failed to load shadow mode status')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     loadStatus()
     // Refresh every 60 seconds
     const interval = setInterval(loadStatus, 60000)
     return () => clearInterval(interval)
-  }, [])
-
-  const loadStatus = async () => {
-    try {
-      const data = await apiClient.getShadowModeStatus()
-      setStatus(data)
-      setError(null)
-    } catch (err: any) {
-      setError(err.message || 'Failed to load shadow mode status')
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [loadStatus])
 
   const formatTimeRemaining = (): string => {
     if (!status || status.time_remaining_hours === null) return ''

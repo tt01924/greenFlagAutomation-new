@@ -1,7 +1,7 @@
 /**
  * EscalationList component - displays escalated tickets with overdue status
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../services/api'
 import type { Escalation } from '../types'
 
@@ -18,11 +18,7 @@ export function EscalationList({ onTicketClick }: EscalationListProps) {
   const [total, setTotal] = useState(0)
   const limit = 20
 
-  useEffect(() => {
-    loadEscalations()
-  }, [page, overdueOnly])
-
-  const loadEscalations = async () => {
+  const loadEscalations = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -32,12 +28,17 @@ export function EscalationList({ onTicketClick }: EscalationListProps) {
 
       setEscalations(data.escalations)
       setTotal(data.total)
-    } catch (err: any) {
-      setError(err.message || 'Failed to load escalations')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Failed to load escalations')
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, overdueOnly])
+
+  useEffect(() => {
+    loadEscalations()
+  }, [loadEscalations])
 
   const handleTicketClick = (ticketKey: string) => {
     if (onTicketClick) {

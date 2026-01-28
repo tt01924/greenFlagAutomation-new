@@ -1,4 +1,5 @@
 """Redis queue wrapper for async ticket processing."""
+
 import json
 import logging
 from typing import Dict, Any, Optional
@@ -131,9 +132,7 @@ class TicketQueue:
             logger.error(f"Redis health check failed: {e}")
             return False
 
-    def set_processing_lock(
-        self, ticket_id: str, worker_id: str, ttl: int = 300
-    ) -> bool:
+    def set_processing_lock(self, ticket_id: str, worker_id: str, ttl: int = 300) -> bool:
         """Set a processing lock to prevent duplicate processing.
 
         Args:
@@ -147,9 +146,7 @@ class TicketQueue:
         lock_key = f"processing_lock:{ticket_id}"
         try:
             # NX = only set if not exists, EX = expiry in seconds
-            result = self.redis_client.set(
-                lock_key, worker_id, nx=True, ex=ttl
-            )
+            result = self.redis_client.set(lock_key, worker_id, nx=True, ex=ttl)
             if result:
                 logger.debug(f"Acquired processing lock for {ticket_id}")
             else:

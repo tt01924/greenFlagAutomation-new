@@ -1,11 +1,11 @@
 """Audit logger service for immutable audit log entries."""
+
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
 
 from src.models.audit_log import AuditLog
-from src.models.base import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -89,10 +89,7 @@ class AuditLogger:
             db.commit()
             db.refresh(audit_log)
 
-            logger.info(
-                f"Created audit log {audit_log.id} for {ticket_key} "
-                f"(action: {action})"
-            )
+            logger.info(f"Created audit log {audit_log.id} for {ticket_key} " f"(action: {action})")
 
             return audit_log
 
@@ -136,9 +133,7 @@ class AuditLogger:
             if audit_log.comment_posted_at:
                 elapsed = (datetime.utcnow() - audit_log.comment_posted_at).total_seconds()
                 if elapsed > 300:  # 5 minutes
-                    raise ValueError(
-                        f"Retraction window expired (posted {int(elapsed)}s ago)"
-                    )
+                    raise ValueError(f"Retraction window expired (posted {int(elapsed)}s ago)")
 
             # Update retraction fields
             audit_log.retracted_at = datetime.utcnow()
@@ -147,9 +142,7 @@ class AuditLogger:
             db.commit()
             db.refresh(audit_log)
 
-            logger.info(
-                f"Marked audit log {audit_log_id} as retracted by {retracted_by}"
-            )
+            logger.info(f"Marked audit log {audit_log_id} as retracted by {retracted_by}")
 
             return audit_log
 

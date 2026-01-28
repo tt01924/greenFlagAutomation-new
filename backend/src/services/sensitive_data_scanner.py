@@ -1,4 +1,5 @@
 """Sensitive data scanner for detecting sensitive information in tickets."""
+
 import re
 import logging
 from typing import List, Tuple
@@ -93,9 +94,7 @@ class SensitiveDataScanner:
         has_sensitive_data = len(detected_items) > 0
 
         if has_sensitive_data:
-            logger.warning(
-                f"Sensitive data detected: {len(detected_items)} items found"
-            )
+            logger.warning(f"Sensitive data detected: {len(detected_items)} items found")
 
         return has_sensitive_data, detected_items
 

@@ -1,9 +1,9 @@
 """Ticket processor worker - consumes tickets from Redis queue and processes them."""
+
 import logging
 import signal
 import sys
 import time
-from typing import Optional
 
 from src.models.base import SessionLocal
 from src.services.queue import TicketQueue
@@ -62,9 +62,7 @@ def process_single_ticket(queue: TicketQueue) -> bool:
         processor = TicketProcessor(db)
         result = processor.process_ticket(webhook_payload)
 
-        logger.info(
-            f"Processed {ticket_key}: status={result.get('status')}"
-        )
+        logger.info(f"Processed {ticket_key}: status={result.get('status')}")
 
         # Release processing lock
         queue.release_processing_lock(ticket_id)
@@ -167,7 +165,14 @@ def run_worker(
 
 
 def main():
-    """Main entry point for worker."""
+    """Main entry point for worker.
+
+    Starts the ticket processor worker with default configuration.
+    Worker runs continuously, consuming tickets from Redis queue and
+    processing them through the full classification and response workflow.
+
+    This is typically run as a long-running process (e.g., via systemd).
+    """
     run_worker(
         worker_id="worker-1",
         batch_size=10,

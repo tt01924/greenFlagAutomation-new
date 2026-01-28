@@ -1,4 +1,5 @@
 """Ticket processor orchestration - coordinates all processing steps."""
+
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
@@ -6,14 +7,13 @@ from sqlalchemy.orm import Session
 
 from src.models.processed_ticket import ProcessedTicket
 from src.models.system_config import SystemConfig
-from src.services.classifier import LLMClassifier, ClassificationResult
+from src.services.classifier import LLMClassifier
 from src.services.confidence_evaluator import ConfidenceEvaluator
 from src.services.sensitive_data_scanner import SensitiveDataScanner
 from src.services.shadow_mode import ShadowModeManager
 from src.services.response_poster import ResponsePoster
 from src.services.template_renderer import TemplateRenderer
 from src.services.audit_logger import AuditLogger
-from src.services.slack_client import SlackClient
 from src.services.escalation_service import EscalationService
 from src.services.metrics import MetricsService
 from src.config.settings import settings
@@ -93,9 +93,7 @@ class TicketProcessor:
             self._mark_ticket_processed(ticket_id, ticket_key)
 
             # Step 4: Scan for sensitive data (FR-010)
-            has_sensitive, detected_items = self.scanner.scan_ticket(
-                summary, description
-            )
+            has_sensitive, detected_items = self.scanner.scan_ticket(summary, description)
             if has_sensitive:
                 reason = self.scanner.get_escalation_reason(detected_items)
                 return self._escalate(
@@ -145,9 +143,7 @@ class TicketProcessor:
                 )
 
             # Step 7: Evaluate confidence (FR-004, FR-008, FR-009)
-            action, response_id, escalation_reason = self.evaluator.evaluate(
-                classification
-            )
+            action, response_id, escalation_reason = self.evaluator.evaluate(classification)
 
             # Step 8: Check shadow mode (FR-019)
             is_shadow_mode, _ = ShadowModeManager.check_shadow_mode(self.db, config)
@@ -155,16 +151,14 @@ class TicketProcessor:
             if is_shadow_mode:
                 # Log action as 'shadow' instead of executing
                 action = "shadow"
-                logger.info(f"Shadow mode active - action logged but not executed")
+                logger.info("Shadow mode active - action logged but not executed")
 
             # Step 9: Execute action
             processing_duration_ms = self._get_duration_ms(start_time)
 
             if action == "auto_respond" or action == "shadow":
                 # Get the matched response
-                matched_response = next(
-                    (r for r in active_responses if r.id == response_id), None
-                )
+                matched_response = next((r for r in active_responses if r.id == response_id), None)
 
                 if not matched_response:
                     logger.error(f"Matched response {response_id} not found")
@@ -232,9 +226,7 @@ class TicketProcessor:
             True if automation enabled
         """
         try:
-            system_config = (
-                self.db.query(SystemConfig).filter(SystemConfig.id == 1).first()
-            )
+            system_config = self.db.query(SystemConfig).filter(SystemConfig.id == 1).first()
             if not system_config:
                 logger.warning("SystemConfig not found, assuming enabled")
                 return True
@@ -294,7 +286,24 @@ class TicketProcessor:
         config_version: str,
         processing_duration_ms: int,
     ) -> Dict[str, Any]:
-        """Auto-respond to ticket."""
+        """Auto-respond to ticket with matched canned response.
+
+        Posts the canned response to Jira, logs to audit, and records metrics.
+
+        Args:
+            ticket_id: Jira ticket ID
+            ticket_key: Jira ticket key (e.g., CASSINI-1234)
+            webhook_payload: Full webhook payload
+            matched_response: CannedResponse object to post
+            confidence_scores: Classification confidence scores
+            config_version: Canned response config version
+            processing_duration_ms: Processing duration in milliseconds
+
+        Returns:
+            Dictionary with status, ticket_key, response_id, comment_id, and audit_log_id
+
+        Constitutional requirement: FR-001 (Pre-approved responses only)
+        """
         # Extract template variables
         issue = webhook_payload.get("issue", {})
         template_vars = TemplateRenderer.extract_variables_from_issue(issue)
@@ -328,9 +337,7 @@ class TicketProcessor:
         MetricsService.record_ticket_processed("auto_respond", "success")
         MetricsService.record_processing_duration(processing_duration_ms / 1000.0)
         if confidence_scores:
-            max_confidence = max(
-                score["confidence"] for score in confidence_scores.values()
-            )
+            max_confidence = max(score["confidence"] for score in confidence_scores.values())
             MetricsService.record_classification_confidence(max_confidence)
 
         return {
@@ -351,7 +358,25 @@ class TicketProcessor:
         config_version: str,
         processing_duration_ms: int,
     ) -> Dict[str, Any]:
-        """Log shadow mode action."""
+        """Log shadow mode action without posting response to Jira.
+
+        During shadow mode, classification happens but responses are only logged,
+        not posted. This allows monitoring new canned responses before activation.
+
+        Args:
+            ticket_id: Jira ticket ID
+            ticket_key: Jira ticket key (e.g., CASSINI-1234)
+            webhook_payload: Full webhook payload
+            matched_response: CannedResponse object that would have been posted
+            confidence_scores: Classification confidence scores
+            config_version: Canned response config version
+            processing_duration_ms: Processing duration in milliseconds
+
+        Returns:
+            Dictionary with status, ticket_key, response_id, and audit_log_id
+
+        Constitutional requirement: FR-019 (48-hour shadow mode)
+        """
         # Log to audit with action='shadow'
         audit_log = AuditLogger.log_ticket_processing(
             db=self.db,
@@ -365,17 +390,13 @@ class TicketProcessor:
             processing_duration_ms=processing_duration_ms,
         )
 
-        logger.info(
-            f"Shadow mode: Would have responded to {ticket_key} with {matched_response.id}"
-        )
+        logger.info(f"Shadow mode: Would have responded to {ticket_key} with {matched_response.id}")
 
         # Record metrics
         MetricsService.record_ticket_processed("shadow", "success")
         MetricsService.record_processing_duration(processing_duration_ms / 1000.0)
         if confidence_scores:
-            max_confidence = max(
-                score["confidence"] for score in confidence_scores.values()
-            )
+            max_confidence = max(score["confidence"] for score in confidence_scores.values())
             MetricsService.record_classification_confidence(max_confidence)
 
         return {
@@ -394,7 +415,28 @@ class TicketProcessor:
         confidence_scores: Dict[str, Any],
         processing_duration_ms: Optional[int],
     ) -> Dict[str, Any]:
-        """Escalate ticket to human."""
+        """Escalate ticket to human reviewer via Slack.
+
+        Logs escalation to audit and sends notification to Green Flag holder
+        via Slack with retry logic. Escalations occur for various reasons including
+        low confidence, sensitive data, urgent tone, or system errors.
+
+        Args:
+            ticket_id: Jira ticket ID
+            ticket_key: Jira ticket key (e.g., CASSINI-1234)
+            webhook_payload: Full webhook payload
+            reason: Human-readable escalation reason
+            confidence_scores: Classification confidence scores (may be empty)
+            processing_duration_ms: Processing duration in milliseconds (may be None)
+
+        Returns:
+            Dictionary with status, ticket_key, reason, and audit_log_id
+
+        Constitutional requirements:
+        - FR-002: Escalate when confidence <80%
+        - FR-003: Detect sensitive data
+        - FR-007: Never drop tickets (fail-safe escalation)
+        """
         # Log to audit
         audit_log = AuditLogger.log_ticket_processing(
             db=self.db,

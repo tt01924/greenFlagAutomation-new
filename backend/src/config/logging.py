@@ -1,13 +1,23 @@
 """Logging configuration for the application."""
+
 import logging
 import sys
-from typing import Any
 
 from src.config.settings import settings
 
 
 def setup_logging() -> None:
-    """Configure application logging."""
+    """Configure application logging with appropriate log levels.
+
+    Sets up structured logging for the application with the following:
+    - Root logger configured with level from settings (INFO, DEBUG, WARNING, ERROR)
+    - Timestamp format: YYYY-MM-DD HH:MM:SS
+    - Third-party library log levels set to reduce noise
+    - Optional LLM debug logging when LLM_DEBUG=True
+
+    This should be called at application startup (FastAPI lifespan)
+    and worker initialization.
+    """
     # Get log level from settings
     log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
 

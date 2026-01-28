@@ -1,4 +1,5 @@
 """Admin API endpoints for system configuration and shadow mode management."""
+
 import logging
 from typing import Dict, Any
 from datetime import datetime
@@ -44,9 +45,7 @@ async def get_shadow_mode_status(db: Session = Depends(get_db)) -> Dict[str, Any
         if config.shadow_mode_active and config.shadow_mode_until:
             now = datetime.utcnow()
             if config.shadow_mode_until > now:
-                time_remaining_seconds = int(
-                    (config.shadow_mode_until - now).total_seconds()
-                )
+                time_remaining_seconds = int((config.shadow_mode_until - now).total_seconds())
             else:
                 # Shadow mode has expired but hasn't been deactivated yet
                 time_remaining_seconds = 0
@@ -54,9 +53,7 @@ async def get_shadow_mode_status(db: Session = Depends(get_db)) -> Dict[str, Any
         return {
             "shadow_mode_active": config.shadow_mode_active,
             "shadow_mode_until": (
-                config.shadow_mode_until.isoformat()
-                if config.shadow_mode_until
-                else None
+                config.shadow_mode_until.isoformat() if config.shadow_mode_until else None
             ),
             "time_remaining_seconds": time_remaining_seconds,
             "time_remaining_hours": (
@@ -98,9 +95,7 @@ async def activate_shadow_mode(
         config = db.query(SystemConfig).filter(SystemConfig.id == 1).first()
 
         if not config:
-            config = SystemConfig(
-                id=1, automation_enabled=True, shadow_mode_active=False
-            )
+            config = SystemConfig(id=1, automation_enabled=True, shadow_mode_active=False)
             db.add(config)
             db.flush()
 
@@ -112,9 +107,7 @@ async def activate_shadow_mode(
         db.commit()
         db.refresh(config)
 
-        logger.info(
-            f"Shadow mode activated until {config.shadow_mode_until.isoformat()}"
-        )
+        logger.info(f"Shadow mode activated until {config.shadow_mode_until.isoformat()}")
 
         return {
             "shadow_mode_active": True,
@@ -354,9 +347,7 @@ async def trigger_circuit_breaker(
         db.commit()
         db.refresh(config)
 
-        logger.critical(
-            f"🚨 CIRCUIT BREAKER TRIGGERED - Automation disabled. Reason: {reason}"
-        )
+        logger.critical(f"🚨 CIRCUIT BREAKER TRIGGERED - Automation disabled. Reason: {reason}")
 
         return {
             "circuit_breaker_triggered": True,

@@ -1,4 +1,5 @@
 """Template renderer for substituting variables in canned responses."""
+
 import logging
 import re
 from typing import Dict, Any
@@ -46,9 +47,7 @@ class TemplateRenderer:
         # Check for any remaining unsubstituted variables
         remaining_vars = re.findall(r"\{\{(\w+)\}\}", rendered)
         if remaining_vars:
-            logger.warning(
-                f"Template contains unrecognized variables: {remaining_vars}"
-            )
+            logger.warning(f"Template contains unrecognized variables: {remaining_vars}")
 
         logger.debug(f"Rendered template with reporter={issue_reporter}")
 
@@ -69,20 +68,14 @@ class TemplateRenderer:
         # Get reporter info
         reporter = fields.get("reporter", {})
         issue_reporter = (
-            reporter.get("displayName")
-            or reporter.get("emailAddress")
-            or "the reporter"
+            reporter.get("displayName") or reporter.get("emailAddress") or "the reporter"
         )
 
         # Get assignee info (may be None)
         assignee = fields.get("assignee")
         issue_assignee = None
         if assignee:
-            issue_assignee = (
-                assignee.get("displayName")
-                or assignee.get("emailAddress")
-                or None
-            )
+            issue_assignee = assignee.get("displayName") or assignee.get("emailAddress") or None
 
         return {
             "issue_reporter": issue_reporter,

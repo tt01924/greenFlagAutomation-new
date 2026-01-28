@@ -1,4 +1,5 @@
 """CannedResponse model - loaded from YAML configuration."""
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
@@ -52,9 +53,11 @@ class CannedResponseConfig:
             True if within shadow mode window
         """
         from datetime import timezone
+
         now = datetime.now(timezone.utc)
-        shadow_mode_end = self.activated_at.replace(tzinfo=timezone.utc) + \
-                         datetime.timedelta(hours=self.shadow_mode_hours)
+        shadow_mode_end = self.activated_at.replace(tzinfo=timezone.utc) + datetime.timedelta(
+            hours=self.shadow_mode_hours
+        )
         return now < shadow_mode_end
 
     @classmethod

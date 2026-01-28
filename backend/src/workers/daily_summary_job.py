@@ -1,13 +1,13 @@
 """Daily summary job - sends summary email/Slack at 9 AM UTC."""
+
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 from src.models.base import SessionLocal
 from src.models.audit_log import AuditLog
 from src.services.slack_client import SlackClient
 from src.config.logging import setup_logging
-from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +23,7 @@ def calculate_daily_stats() -> Dict[str, Any]:
     try:
         # Get yesterday's date range
         today = datetime.utcnow().date()
-        yesterday_start = datetime.combine(
-            today - timedelta(days=1), datetime.min.time()
-        )
+        yesterday_start = datetime.combine(today - timedelta(days=1), datetime.min.time())
         yesterday_end = datetime.combine(today, datetime.min.time())
 
         # Query tickets from yesterday
@@ -52,9 +50,7 @@ def calculate_daily_stats() -> Dict[str, Any]:
                     response_counts.get(ticket.matched_response_id, 0) + 1
                 )
 
-        top_categories = sorted(
-            response_counts.items(), key=lambda x: x[1], reverse=True
-        )[:5]
+        top_categories = sorted(response_counts.items(), key=lambda x: x[1], reverse=True)[:5]
 
         return {
             "date": (today - timedelta(days=1)).isoformat(),
@@ -62,9 +58,7 @@ def calculate_daily_stats() -> Dict[str, Any]:
             "auto_responded": auto_responded,
             "escalated": escalated,
             "retracted": retracted,
-            "top_categories": [
-                {"name": name, "count": count} for name, count in top_categories
-            ],
+            "top_categories": [{"name": name, "count": count} for name, count in top_categories],
         }
 
     finally:
@@ -104,7 +98,13 @@ def send_daily_summary() -> None:
 
 
 def main():
-    """Entry point for scheduled execution."""
+    """Entry point for scheduled execution.
+
+    This function is called by the scheduler (e.g., cron) at 9 AM UTC daily.
+    Calculates statistics for previous day and sends summary to Slack.
+
+    Constitutional requirement: FR-017 (Daily summary reports)
+    """
     send_daily_summary()
 
 

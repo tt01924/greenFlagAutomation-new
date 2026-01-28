@@ -1,4 +1,5 @@
 """Prometheus metrics for monitoring and alerting."""
+
 import logging
 from prometheus_client import Counter, Gauge, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from fastapi import Response
@@ -189,9 +190,7 @@ class MetricsService:
         escalation_overdue_count.set(overdue_count)
 
     @staticmethod
-    def record_external_service_request(
-        service: str, status: str, duration_seconds: float
-    ) -> None:
+    def record_external_service_request(service: str, status: str, duration_seconds: float) -> None:
         """Record an external service request.
 
         Args:
@@ -200,9 +199,7 @@ class MetricsService:
             duration_seconds: Request duration
         """
         external_service_request_total.labels(service=service, status=status).inc()
-        external_service_request_duration_seconds.labels(service=service).observe(
-            duration_seconds
-        )
+        external_service_request_duration_seconds.labels(service=service).observe(duration_seconds)
 
     @staticmethod
     def get_metrics() -> Response:

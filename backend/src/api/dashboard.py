@@ -1,10 +1,11 @@
 """Dashboard API endpoints for viewing tickets, escalations, and reports."""
+
 import logging
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
+from sqlalchemy import and_
 
 from src.models.base import get_db
 from src.models.audit_log import AuditLog
@@ -138,9 +139,7 @@ async def get_ticket_detail(
             "confidence_scores": audit_log.confidence_scores,
             "comment_id": audit_log.comment_id,
             "comment_posted_at": (
-                audit_log.comment_posted_at.isoformat()
-                if audit_log.comment_posted_at
-                else None
+                audit_log.comment_posted_at.isoformat() if audit_log.comment_posted_at else None
             ),
             "retracted_at": (
                 audit_log.retracted_at.isoformat() if audit_log.retracted_at else None
@@ -207,9 +206,7 @@ async def get_escalations(
                 "ticket_key": escalation.ticket_key,
                 "escalation_reason": escalation.escalation_reason,
                 "created_at": escalation.created_at.isoformat(),
-                "is_overdue": (
-                    datetime.utcnow() - escalation.created_at
-                ).total_seconds()
+                "is_overdue": (datetime.utcnow() - escalation.created_at).total_seconds()
                 > 14400,  # 4 hours
                 "ticket_summary": escalation.ticket_snapshot.get("issue", {})
                 .get("fields", {})
@@ -283,9 +280,7 @@ async def retract_response(
 
         # Check if within retraction window (5 minutes)
         if audit_log.comment_posted_at:
-            elapsed_minutes = (
-                datetime.utcnow() - audit_log.comment_posted_at
-            ).total_seconds() / 60
+            elapsed_minutes = (datetime.utcnow() - audit_log.comment_posted_at).total_seconds() / 60
 
             if elapsed_minutes > settings.RETRACTION_WINDOW_MINUTES:
                 raise HTTPException(
@@ -372,9 +367,7 @@ async def get_weekly_report(
         retracted = sum(1 for t in tickets if t.retracted_at is not None)
 
         # Calculate automation rate
-        automation_rate = (
-            (auto_responded / total_tickets * 100) if total_tickets > 0 else 0
-        )
+        automation_rate = (auto_responded / total_tickets * 100) if total_tickets > 0 else 0
 
         # Top canned responses
         response_counts = {}
@@ -384,9 +377,7 @@ async def get_weekly_report(
                     response_counts.get(ticket.matched_response_id, 0) + 1
                 )
 
-        top_responses = sorted(
-            response_counts.items(), key=lambda x: x[1], reverse=True
-        )[:5]
+        top_responses = sorted(response_counts.items(), key=lambda x: x[1], reverse=True)[:5]
 
         # Top escalation reasons
         escalation_reasons = {}
@@ -411,17 +402,12 @@ async def get_weekly_report(
                 "retracted": retracted,
                 "automation_rate": round(automation_rate, 1),
                 "false_positive_rate": (
-                    round(retracted / auto_responded * 100, 1)
-                    if auto_responded > 0
-                    else 0
+                    round(retracted / auto_responded * 100, 1) if auto_responded > 0 else 0
                 ),
             },
-            "top_responses": [
-                {"response_id": rid, "count": count} for rid, count in top_responses
-            ],
+            "top_responses": [{"response_id": rid, "count": count} for rid, count in top_responses],
             "top_escalation_reasons": [
-                {"reason": reason, "count": count}
-                for reason, count in top_escalation_reasons
+                {"reason": reason, "count": count} for reason, count in top_escalation_reasons
             ],
         }
 

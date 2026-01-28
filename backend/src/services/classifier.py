@@ -1,4 +1,5 @@
 """LLM-based ticket classifier using Anthropic Claude with GPT-4 fallback."""
+
 import json
 import logging
 from typing import Dict, Any, List, Optional
@@ -81,9 +82,7 @@ class LLMClassifier:
 
     def __init__(self) -> None:
         """Initialize LLM classifier with Anthropic and OpenAI clients."""
-        self.anthropic_client = anthropic.Anthropic(
-            api_key=settings.ANTHROPIC_API_KEY
-        )
+        self.anthropic_client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 
         if settings.OPENAI_API_KEY:
             openai.api_key = settings.OPENAI_API_KEY
@@ -180,9 +179,7 @@ class LLMClassifier:
             logger.error(f"Anthropic API error: {e}")
             raise
 
-    def _classify_with_openai(
-        self, prompts: Dict[str, str], timeout: int
-    ) -> ClassificationResult:
+    def _classify_with_openai(self, prompts: Dict[str, str], timeout: int) -> ClassificationResult:
         """Classify using OpenAI GPT-4.
 
         Args:

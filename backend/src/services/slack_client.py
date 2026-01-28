@@ -1,4 +1,5 @@
 """Slack client wrapper for sending messages and notifications."""
+
 import logging
 from typing import Dict, Any, List, Optional
 from slack_bolt import App
@@ -180,9 +181,7 @@ class SlackClient:
                 unfurl_links=False,
                 unfurl_media=False,
             )
-            logger.info(
-                f"Sent escalation message for {ticket_key} to {channel_or_user_id}"
-            )
+            logger.info(f"Sent escalation message for {ticket_key} to {channel_or_user_id}")
             return response
         except SlackApiError as e:
             logger.error(f"Failed to send Slack message: {e}")
@@ -236,7 +235,10 @@ class SlackClient:
 
         if top_categories:
             category_text = "\n".join(
-                [f"{i+1}. {cat['name']}: {cat['count']}" for i, cat in enumerate(top_categories[:5])]
+                [
+                    f"{i+1}. {cat['name']}: {cat['count']}"
+                    for i, cat in enumerate(top_categories[:5])
+                ]
             )
             blocks.append(
                 {

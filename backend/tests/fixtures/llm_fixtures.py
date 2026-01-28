@@ -1,4 +1,5 @@
 """Test fixtures for LLM classification responses."""
+
 from typing import Dict, Any
 
 

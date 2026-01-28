@@ -1,8 +1,8 @@
 """AuditLog model - immutable record of every ticket processed."""
+
 from datetime import datetime
-from typing import Optional
 from uuid import uuid4
-from sqlalchemy import Column, String, Integer, DateTime, CheckConstraint, Index, text
+from sqlalchemy import Column, String, Integer, DateTime, CheckConstraint, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 from src.models.base import Base

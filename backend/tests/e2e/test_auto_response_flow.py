@@ -9,13 +9,17 @@ This test simulates the full workflow:
 6. Response posted to Jira
 7. Audit log created
 """
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
 
 from src.services.processor import TicketProcessor
 from src.services.classifier import ClassificationResult
-from tests.fixtures.jira_fixtures import get_mock_jira_webhook_payload, get_mock_jira_comment_response
+from tests.fixtures.jira_fixtures import (
+    get_mock_jira_webhook_payload,
+    get_mock_jira_comment_response,
+)
 from tests.fixtures.llm_fixtures import get_mock_classification_response_high_confidence
 from tests.helpers.db import create_test_db, drop_test_db
 
@@ -36,9 +40,11 @@ def test_auto_response_flow_success():
         )
 
         # Mock external services
-        with patch("src.services.classifier.LLMClassifier") as mock_classifier_class, \
-             patch("src.services.jira_client.JiraClient") as mock_jira_class, \
-             patch("src.services.slack_client.SlackClient"):
+        with (
+            patch("src.services.classifier.LLMClassifier") as mock_classifier_class,
+            patch("src.services.jira_client.JiraClient") as mock_jira_class,
+            patch("src.services.slack_client.SlackClient"),
+        ):
 
             # Configure mock LLM classifier
             mock_classifier = Mock()
@@ -64,9 +70,7 @@ def test_auto_response_flow_success():
             # Configure mock Jira client
             mock_jira = Mock()
             mock_jira_class.return_value = mock_jira
-            mock_jira.post_comment.return_value = get_mock_jira_comment_response(
-                comment_id="67890"
-            )
+            mock_jira.post_comment.return_value = get_mock_jira_comment_response(comment_id="67890")
 
             # Process ticket
             processor = TicketProcessor(db)
@@ -91,9 +95,8 @@ def test_auto_response_flow_success():
 
             # Verify audit log was created
             from src.models.audit_log import AuditLog
-            audit_log = db.query(AuditLog).filter(
-                AuditLog.ticket_key == "CASSINI-1234"
-            ).first()
+
+            audit_log = db.query(AuditLog).filter(AuditLog.ticket_key == "CASSINI-1234").first()
 
             assert audit_log is not None
             assert audit_log.action == "auto_respond"
@@ -116,9 +119,11 @@ def test_auto_response_flow_with_shadow_mode():
         )
 
         # Mock shadow mode active
-        with patch("src.services.classifier.LLMClassifier") as mock_classifier_class, \
-             patch("src.services.shadow_mode.ShadowModeManager.check_shadow_mode") as mock_shadow, \
-             patch("src.services.jira_client.JiraClient"):
+        with (
+            patch("src.services.classifier.LLMClassifier") as mock_classifier_class,
+            patch("src.services.shadow_mode.ShadowModeManager.check_shadow_mode") as mock_shadow,
+            patch("src.services.jira_client.JiraClient"),
+        ):
 
             # Shadow mode active
             mock_shadow.return_value = (True, datetime.utcnow())
@@ -150,9 +155,8 @@ def test_auto_response_flow_with_shadow_mode():
 
             # Verify audit log action is 'shadow'
             from src.models.audit_log import AuditLog
-            audit_log = db.query(AuditLog).filter(
-                AuditLog.ticket_key == "CASSINI-5678"
-            ).first()
+
+            audit_log = db.query(AuditLog).filter(AuditLog.ticket_key == "CASSINI-5678").first()
 
             assert audit_log is not None
             assert audit_log.action == "shadow"
@@ -176,6 +180,7 @@ def test_auto_response_follow_up_detection():
 
         # Mark ticket as already processed
         from src.models.processed_ticket import ProcessedTicket
+
         processed = ProcessedTicket(
             ticket_id="99999",
             ticket_key="CASSINI-9999",

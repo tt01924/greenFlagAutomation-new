@@ -1,4 +1,5 @@
 """Jira client wrapper for interacting with Jira Cloud API."""
+
 import logging
 from typing import Optional, Dict, Any
 from atlassian import Jira
@@ -92,7 +93,7 @@ class JiraClient:
         """
         try:
             # Get the comment first to verify it exists
-            comment = self.client.comment(issue_key, comment_id)
+            self.client.comment(issue_key, comment_id)
 
             # Update the comment
             updated = self.client.update_comment(

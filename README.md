@@ -75,12 +75,100 @@ greenFlagAutomation/
 
 ## Architecture
 
+### Technology Stack
+
 - **Backend**: FastAPI (Python 3.11+) with async workers
 - **Frontend**: React 18 + TypeScript + Vite
 - **Database**: PostgreSQL 14+ with JSONB
 - **Queue**: Redis (RQ) for async ticket processing
 - **Classification**: Anthropic Claude (Sonnet) with GPT-4 fallback
-- **Infrastructure**: Kubernetes + Terraform
+- **Infrastructure**: Kubernetes + Terraform (AWS RDS, ElastiCache, S3)
+- **Monitoring**: Prometheus + Grafana
+
+### System Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         External Services                            │
+│  ┌──────────┐      ┌──────────┐      ┌────────────────────────┐   │
+│  │   Jira   │      │  Slack   │      │   Anthropic Claude /   │   │
+│  │          │      │          │      │      OpenAI GPT-4      │   │
+│  └─────┬────┘      └────▲─────┘      └──────────▲─────────────┘   │
+└────────┼────────────────┼────────────────────────┼─────────────────┘
+         │ Webhooks       │ Escalations            │ Classification
+         │                │                        │
+┌────────▼────────────────┴────────────────────────┴─────────────────┐
+│                   Kubernetes Cluster (EKS)                          │
+│                                                                      │
+│  ┌────────────────────────────────────────────────────────────┐   │
+│  │                   API Service (3 replicas)                  │   │
+│  │  ┌───────────────┬────────────────┬────────────────────┐   │   │
+│  │  │  /webhooks    │    /api/       │   /api/admin       │   │   │
+│  │  │   endpoint    │  dashboard     │   kill-switch      │   │   │
+│  │  └───────────────┴────────────────┴────────────────────┘   │   │
+│  │                          │                                   │   │
+│  │                          ▼ Enqueue                           │   │
+│  └──────────────────────────┼───────────────────────────────────┘   │
+│                              │                                       │
+│  ┌──────────────────────────▼───────────────────────────────────┐  │
+│  │                   Redis Queue (ElastiCache)                   │  │
+│  │              ┌─────────────────────────────────┐              │  │
+│  │              │   ticket_queue (async jobs)     │              │  │
+│  │              └─────────────────────────────────┘              │  │
+│  └──────────────────────────┬───────────────────────────────────┘  │
+│                              │                                       │
+│                              ▼ Dequeue                               │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │              Worker Service (2 replicas)                      │  │
+│  │  ┌────────────────┬──────────────────┬───────────────────┐   │  │
+│  │  │  Classification │  Auto-Response   │   Escalation      │   │  │
+│  │  │     (LLM)      │   (Jira API)     │   (Slack API)     │   │  │
+│  │  └────────────────┴──────────────────┴───────────────────┘   │  │
+│  │                          │                                     │  │
+│  │                          ▼ Store results                       │  │
+│  └──────────────────────────┼─────────────────────────────────────┘│
+│                              │                                       │
+│  ┌──────────────────────────▼───────────────────────────────────┐  │
+│  │                PostgreSQL Database (RDS)                      │  │
+│  │  ┌────────────────┬─────────────────┬────────────────────┐   │  │
+│  │  │  audit_logs    │ processed_      │ system_config      │   │  │
+│  │  │  (immutable)   │   tickets       │ (feature flags)    │   │  │
+│  │  └────────────────┴─────────────────┴────────────────────┘   │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │              CronJobs (Scheduled Tasks)                       │  │
+│  │  • Daily Summary (9 AM UTC) → Slack                           │  │
+│  │  • Audit Cleanup (Weekly) → S3 Archive                        │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │         Monitoring (Prometheus + Grafana)                     │  │
+│  │  • Ticket processing rate • Error rates • Queue depth         │  │
+│  │  • Confidence scores • External service latency               │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────┘
+         │
+         ▼ Archive (>90 days)
+┌────────────────────────────────────────────────────────────────────┐
+│                    S3 Bucket (Audit Archive)                        │
+│  • 90-day transition to Glacier • 7-year retention                 │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow
+
+1. **Jira Webhook** → API receives `issue_created` or `issue_updated` event
+2. **API** → Validates webhook signature, enqueues job to Redis
+3. **Worker** → Dequeues job, classifies ticket using LLM
+4. **Decision**:
+   - **High confidence (>80%)**: Post canned response to Jira
+   - **Low confidence (<80%)**: Escalate to Slack with reasoning
+   - **Sensitive data detected**: Always escalate
+   - **Error occurred**: Always escalate (fail-safe)
+5. **Audit** → Store immutable audit log entry in PostgreSQL
+6. **Metrics** → Record Prometheus metrics (processing time, confidence, action)
+7. **Dashboard** → Display processed tickets with retraction capability (5-min window)
 
 ## Key Features
 
@@ -251,11 +339,20 @@ See [deployment documentation](./docs/deployment.md) for production deployment w
 
 ## Documentation
 
-- [Feature Specification](./specs/001-green-flag-automation/spec.md)
-- [Implementation Plan](./specs/001-green-flag-automation/plan.md)
-- [Quickstart Guide](./specs/001-green-flag-automation/quickstart.md)
-- [Data Model](./specs/001-green-flag-automation/data-model.md)
-- [API Contracts](./specs/001-green-flag-automation/contracts/)
+### Getting Started
+- [Quickstart Guide](./specs/001-green-flag-automation/quickstart.md) - Setup for local development
+- [Deployment Guide](./docs/deployment.md) - Production deployment with Kubernetes & Terraform
+- [Contributing Guide](./CONTRIBUTING.md) - Development workflow and PR process
+
+### Technical Documentation
+- [Feature Specification](./specs/001-green-flag-automation/spec.md) - Detailed requirements and success criteria
+- [Implementation Plan](./specs/001-green-flag-automation/plan.md) - Technical design and architecture decisions
+- [Data Model](./specs/001-green-flag-automation/data-model.md) - Database schema and relationships
+- [API Contracts](./specs/001-green-flag-automation/contracts/) - API request/response specifications
+- [Operational Runbook](./docs/runbook.md) - Common issues, debugging, and incident response
+
+### Governance
+- [Project Constitution](./.specify/memory/constitution.md) - Core principles and non-negotiable requirements
 
 ## Support
 

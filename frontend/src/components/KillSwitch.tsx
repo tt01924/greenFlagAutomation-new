@@ -1,7 +1,7 @@
 /**
  * KillSwitch component - toggle automation on/off
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../services/api'
 
 export function KillSwitch() {
@@ -11,23 +11,24 @@ export function KillSwitch() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadStatus()
-  }, [])
-
-  const loadStatus = async () => {
+  const loadStatus = useCallback(async () => {
     setLoading(true)
     setError(null)
 
     try {
       const data = await apiClient.getKillSwitchStatus()
       setAutomationEnabled(data.automation_enabled)
-    } catch (err: any) {
-      setError(err.message || 'Failed to load kill switch status')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Failed to load kill switch status')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadStatus()
+  }, [loadStatus])
 
   const handleToggle = async () => {
     const action = automationEnabled ? 'disable' : 'enable'
@@ -63,8 +64,9 @@ export function KillSwitch() {
 
       // Clear success message after 5 seconds
       setTimeout(() => setSuccessMessage(null), 5000)
-    } catch (err: any) {
-      setError(err.message || `Failed to ${action} automation`)
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || `Failed to ${action} automation`)
     } finally {
       setActionLoading(false)
     }

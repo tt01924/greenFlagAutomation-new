@@ -1,4 +1,5 @@
 """Confidence evaluator for determining if classification should trigger auto-response."""
+
 import logging
 from typing import Dict, Any, Optional, Tuple
 
@@ -22,9 +23,7 @@ class ConfidenceEvaluator:
             auto_respond_threshold: Minimum confidence for auto-response (default from settings)
             ambiguity_window: Window for considering matches ambiguous (default from settings)
         """
-        self.auto_respond_threshold = (
-            auto_respond_threshold or settings.AUTO_RESPOND_THRESHOLD
-        )
+        self.auto_respond_threshold = auto_respond_threshold or settings.AUTO_RESPOND_THRESHOLD
         self.ambiguity_window = ambiguity_window or settings.AMBIGUITY_WINDOW
 
     def evaluate(
@@ -99,10 +98,7 @@ class ConfidenceEvaluator:
             )[:2]
 
             match_str = ", ".join(
-                [
-                    f"{rid} ({data['confidence']:.0%})"
-                    for rid, data in top_matches
-                ]
+                [f"{rid} ({data['confidence']:.0%})" for rid, data in top_matches]
             )
 
             logger.info(f"Ambiguous matches detected: {match_str}")
@@ -113,9 +109,7 @@ class ConfidenceEvaluator:
             )
 
         # All checks passed - auto-respond
-        logger.info(
-            f"Classification passed all checks: {response_id} ({confidence:.2%})"
-        )
+        logger.info(f"Classification passed all checks: {response_id} ({confidence:.2%})")
         return ("auto_respond", response_id, None)
 
     def get_top_matches_summary(
@@ -140,8 +134,6 @@ class ConfidenceEvaluator:
         for i, (response_id, data) in enumerate(sorted_matches, 1):
             confidence = data["confidence"]
             reasoning = data.get("reasoning", "No reasoning provided")
-            lines.append(
-                f"{i}. {response_id} ({confidence:.0%}) - {reasoning[:100]}"
-            )
+            lines.append(f"{i}. {response_id} ({confidence:.0%}) - {reasoning[:100]}")
 
         return "\n".join(lines)

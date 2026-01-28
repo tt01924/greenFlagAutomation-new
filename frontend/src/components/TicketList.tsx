@@ -1,7 +1,7 @@
 /**
  * TicketList component - displays list of processed tickets with filters
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../services/api'
 import type { Ticket } from '../types'
 
@@ -19,11 +19,7 @@ export function TicketList({ onTicketClick }: TicketListProps) {
 
   const limit = 20
 
-  useEffect(() => {
-    loadTickets()
-  }, [actionFilter, page])
-
-  const loadTickets = async () => {
+  const loadTickets = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -36,12 +32,17 @@ export function TicketList({ onTicketClick }: TicketListProps) {
 
       setTickets(response.tickets)
       setTotal(response.total)
-    } catch (err: any) {
-      setError(err.message || 'Failed to load tickets')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Failed to load tickets')
     } finally {
       setLoading(false)
     }
-  }
+  }, [actionFilter, page])
+
+  useEffect(() => {
+    loadTickets()
+  }, [loadTickets])
 
   const getActionBadgeColor = (action: string) => {
     switch (action) {

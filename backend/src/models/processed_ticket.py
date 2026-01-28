@@ -1,6 +1,7 @@
 """ProcessedTicket model - tracks tickets to prevent re-processing follow-ups."""
+
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, DateTime, Index
+from sqlalchemy import Column, String, Integer, DateTime
 
 from src.models.base import Base
 

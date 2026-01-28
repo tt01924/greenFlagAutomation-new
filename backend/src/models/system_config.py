@@ -1,6 +1,6 @@
 """SystemConfig model - runtime configuration and state."""
+
 from datetime import datetime
-from typing import Optional
 from sqlalchemy import Column, Integer, Boolean, String, Text, DateTime, DECIMAL, CheckConstraint
 
 from src.models.base import Base
@@ -35,9 +35,7 @@ class SystemConfig(Base):
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Table constraints
-    __table_args__ = (
-        CheckConstraint("id = 1", name="system_config_singleton"),
-    )
+    __table_args__ = (CheckConstraint("id = 1", name="system_config_singleton"),)
 
     def __repr__(self) -> str:
         """String representation."""

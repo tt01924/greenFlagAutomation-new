@@ -1,7 +1,7 @@
 /**
  * TicketDetail component - full ticket view with retract button
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { apiClient } from '../services/api'
 import type { TicketDetail as TicketDetailType } from '../types'
 
@@ -17,23 +17,24 @@ export function TicketDetail({ ticketKey, onBack }: TicketDetailProps) {
   const [retractLoading, setRetractLoading] = useState(false)
   const [retractSuccess, setRetractSuccess] = useState(false)
 
-  useEffect(() => {
-    loadTicket()
-  }, [ticketKey])
-
-  const loadTicket = async () => {
+  const loadTicket = useCallback(async () => {
     setLoading(true)
     setError(null)
 
     try {
       const data = await apiClient.getTicketDetail(ticketKey)
       setTicket(data)
-    } catch (err: any) {
-      setError(err.message || 'Failed to load ticket')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Failed to load ticket')
     } finally {
       setLoading(false)
     }
-  }
+  }, [ticketKey])
+
+  useEffect(() => {
+    loadTicket()
+  }, [loadTicket])
 
   const handleRetract = async () => {
     if (!ticket) return
@@ -60,8 +61,9 @@ export function TicketDetail({ ticketKey, onBack }: TicketDetailProps) {
       setRetractSuccess(true)
       // Reload ticket to show retracted status
       await loadTicket()
-    } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Failed to retract response')
+    } catch (err) {
+      const error = err as { response?: { data?: { detail?: string } }; message?: string }
+      setError(error.response?.data?.detail || error.message || 'Failed to retract response')
     } finally {
       setRetractLoading(false)
     }

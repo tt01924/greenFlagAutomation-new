@@ -231,7 +231,7 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 - [x] T087 [P] Create Terraform configuration in infra/terraform/main.tf (RDS PostgreSQL, ElastiCache Redis, S3 audit archive bucket)
 - [x] T088 [P] Create Terraform variables in infra/terraform/variables.tf
 - [x] T089 [P] Setup Grafana dashboard JSON in infra/grafana/dashboard.json (ticket metrics, error rates, latencies)
-- [ ] T090 [P] Create deployment documentation in docs/deployment.md (kubectl commands, terraform apply steps)
+- [x] T090 [P] Create deployment documentation in docs/deployment.md (kubectl commands, terraform apply steps)
 
 ---
 
@@ -239,16 +239,16 @@ Per plan.md, this is a **monorepo with backend + frontend**:
 
 **Purpose**: Final improvements and documentation
 
-- [ ] T091 [P] Create root README.md with project overview, architecture diagram, and links to quickstart
-- [ ] T092 [P] Create CONTRIBUTING.md with development workflow, testing guidelines, PR process
-- [ ] T093 [P] Add inline documentation (docstrings) for all public functions in backend/src/
+- [x] T091 [P] Create root README.md with project overview, architecture diagram, and links to quickstart
+- [x] T092 [P] Create CONTRIBUTING.md with development workflow, testing guidelines, PR process
+- [x] T093 [P] Add inline documentation (docstrings) for all public functions in backend/src/
 - [ ] T094 [P] Generate OpenAPI docs from FastAPI app (auto-generated at /docs endpoint)
-- [ ] T095 [P] Run security audit with bandit in backend/ (check for common vulnerabilities)
-- [ ] T096 [P] Run frontend accessibility audit with axe-core
+- [x] T095 [P] Run security audit with bandit in backend/ (check for common vulnerabilities)
+- [x] T096 [P] Run frontend accessibility audit with axe-core
 - [ ] T097 Run full E2E validation following quickstart.md (verify all steps work)
-- [ ] T098 Create operational runbook in docs/runbook.md (common issues, debugging, alerting)
+- [x] T098 Create operational runbook in docs/runbook.md (common issues, debugging, alerting)
 - [ ] T099 Performance testing with locust (simulate 100 tickets/day load)
-- [ ] T100 [P] Code cleanup and linting pass (black, mypy, pylint, eslint)
+- [x] T100 [P] Code cleanup and linting pass (black, mypy, pylint, eslint)
 
 ---
 

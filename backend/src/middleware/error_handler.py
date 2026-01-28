@@ -1,4 +1,5 @@
 """Error handling middleware for FastAPI."""
+
 import logging
 from typing import Callable
 from fastapi import Request, Response, status
